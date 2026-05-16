@@ -1,0 +1,696 @@
+{
+  "info": {
+    "name": "Maqas Presentation Workflow",
+    "_postman_id": "maqas-presentation-workflow",
+    "description": "Clean demo workflow for Maqas Capstone2: customer registration, tailor shop setup, measurements, order creation, notifications, filtering, and ChatGPT trends.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "customerId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "tailorShopId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "measurementId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "orderId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Setup Demo Data",
+      "description": "Run these requests first after starting the Spring Boot app. They create the main customer, tailor shop, measurements, and order used in the presentation.",
+      "item": [
+        {
+          "name": "1. Register Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Customer created\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.sendRequest(pm.collectionVariables.get(\"baseUrl\") + \"/api/v1/customer/get\", function (err, res) {",
+                  "    if (!err) {",
+                  "        const customers = res.json();",
+                  "        const customer = customers.find(c => c.email === \"noura@example.com\");",
+                  "        if (customer) {",
+                  "            pm.collectionVariables.set(\"customerId\", customer.id);",
+                  "        }",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Noura Saleh\",\n  \"email\": \"noura@example.com\",\n  \"phoneNumber\": \"0512345678\",\n  \"password\": \"noura123\",\n  \"city\": \"Riyadh\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/customer/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "customer",
+                "add"
+              ]
+            },
+            "description": "Creates a customer account. This demonstrates validation, unique email/phone checks, and database insert."
+          }
+        },
+        {
+          "name": "2. Add Tailor Shop",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Tailor shop created\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.sendRequest(pm.collectionVariables.get(\"baseUrl\") + \"/api/v1/tailor-shop/get\", function (err, res) {",
+                  "    if (!err) {",
+                  "        const shops = res.json();",
+                  "        const shop = shops.find(s => s.email === \"almashal@example.com\");",
+                  "        if (shop) {",
+                  "            pm.collectionVariables.set(\"tailorShopId\", shop.id);",
+                  "        }",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Al Mashal Tailors\",\n  \"ownerName\": \"Fahad Alotaibi\",\n  \"email\": \"almashal@example.com\",\n  \"phoneNumber\": \"0598765432\",\n  \"city\": \"Riyadh\",\n  \"specialty\": \"ALL\",\n  \"rating\": 5\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tailor-shop/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tailor-shop",
+                "add"
+              ]
+            },
+            "description": "Creates a tailor shop that supports all clothing categories."
+          }
+        },
+        {
+          "name": "3. Save Customer Measurements",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Measurement saved\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.sendRequest(pm.collectionVariables.get(\"baseUrl\") + \"/api/v1/measurement/customer/\" + pm.collectionVariables.get(\"customerId\"), function (err, res) {",
+                  "    if (!err) {",
+                  "        const measurements = res.json();",
+                  "        if (measurements.length > 0) {",
+                  "            pm.collectionVariables.set(\"measurementId\", measurements[measurements.length - 1].id);",
+                  "        }",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"shoulder\": 43.5,\n  \"chest\": 96.0,\n  \"waist\": 82.0,\n  \"sleeveLength\": 59.0,\n  \"height\": 164.0,\n  \"notes\": \"Prefers modest loose fit\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/measurement/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "measurement",
+                "add"
+              ]
+            },
+            "description": "Stores measurements linked to the customer."
+          }
+        },
+        {
+          "name": "4. Create Custom Clothing Order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Order created\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.sendRequest(pm.collectionVariables.get(\"baseUrl\") + \"/api/v1/order/customer/\" + pm.collectionVariables.get(\"customerId\"), function (err, res) {",
+                  "    if (!err) {",
+                  "        const orders = res.json();",
+                  "        if (orders.length > 0) {",
+                  "            pm.collectionVariables.set(\"orderId\", orders[orders.length - 1].id);",
+                  "        }",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{tailorShopId}},\n  \"category\": \"ABAYA\",\n  \"fabricType\": \"Crepe\",\n  \"color\": \"Black\",\n  \"price\": 420.0,\n  \"status\": \"PENDING\",\n  \"orderDate\": \"2026-05-14\",\n  \"deliveryDate\": \"2026-06-01\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "create"
+              ]
+            },
+            "description": "Creates an order. This triggers email and WhatsApp notification logic."
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Main Presentation Flow",
+      "description": "Use this folder to show the main user journey and integrations.",
+      "item": [
+        {
+          "name": "1. Show All Customers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/customer/get",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "customer",
+                "get"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2. Show Tailor Shops in Riyadh",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tailor-shop/city/Riyadh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tailor-shop",
+                "city",
+                "Riyadh"
+              ]
+            }
+          }
+        },
+        {
+          "name": "3. Show Customer Measurements",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/measurement/customer/{{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "measurement",
+                "customer",
+                "{{customerId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "4. Show Customer Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/customer/{{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "customer",
+                "{{customerId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "5. Change Order Status - In Progress",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/change-status/{{orderId}}/IN_PROGRESS",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "change-status",
+                "{{orderId}}",
+                "IN_PROGRESS"
+              ]
+            },
+            "description": "This demonstrates the notification integration when order status changes."
+          }
+        },
+        {
+          "name": "6. Change Order Status - Ready",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/change-status/{{orderId}}/READY",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "change-status",
+                "{{orderId}}",
+                "READY"
+              ]
+            },
+            "description": "This is the second notification moment in the demo."
+          }
+        },
+        {
+          "name": "7. ChatGPT Order Trends",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/ai/order-trends",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "ai",
+                "order-trends"
+              ]
+            },
+            "description": "Shows the ChatGPT trend summary from database order data."
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Error Handling Demo",
+      "description": "Use these requests to show clean validation and business-rule errors without global exception handling.",
+      "item": [
+        {
+          "name": "Duplicate Customer Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sara Saleh\",\n  \"email\": \"noura@example.com\",\n  \"phoneNumber\": \"0500000001\",\n  \"password\": \"sara123\",\n  \"city\": \"Jeddah\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/customer/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "customer",
+                "add"
+              ]
+            },
+            "description": "Expected response: 400 with message: Email already exists."
+          }
+        },
+        {
+          "name": "Duplicate Customer Phone Number",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sara Saleh\",\n  \"email\": \"sara@example.com\",\n  \"phoneNumber\": \"0512345678\",\n  \"password\": \"sara123\",\n  \"city\": \"Jeddah\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/customer/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "customer",
+                "add"
+              ]
+            },
+            "description": "Expected response: 400 with message: Phone number already exists."
+          }
+        },
+        {
+          "name": "Invalid Order Status",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/change-status/{{orderId}}/FINISHED",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "change-status",
+                "{{orderId}}",
+                "FINISHED"
+              ]
+            },
+            "description": "Expected response: 400 with valid status message."
+          }
+        },
+        {
+          "name": "Unsupported Tailor Shop Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{tailorShopId}},\n  \"category\": \"UNIFORM\",\n  \"fabricType\": \"Polyester\",\n  \"color\": \"Navy\",\n  \"price\": 300.0,\n  \"status\": \"PENDING\",\n  \"orderDate\": \"2026-05-14\",\n  \"deliveryDate\": \"2026-06-05\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "create"
+              ]
+            },
+            "description": "This will succeed when the demo shop specialty is ALL. Change the shop specialty to THOBE first if you want to demonstrate the unsupported category error."
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Full CRUD Reference",
+      "description": "Extra endpoint reference for grading. Use this folder if the instructor asks to see full CRUD.",
+      "item": [
+        {
+          "name": "Update Customer",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Noura Saleh Updated\",\n  \"email\": \"noura.updated@example.com\",\n  \"phoneNumber\": \"0512345678\",\n  \"password\": \"noura456\",\n  \"city\": \"Jeddah\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/customer/update/{{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "customer",
+                "update",
+                "{{customerId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Tailor Shop",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Al Mashal Tailors Updated\",\n  \"ownerName\": \"Fahad Alotaibi\",\n  \"email\": \"almashal.updated@example.com\",\n  \"phoneNumber\": \"0598765432\",\n  \"city\": \"Riyadh\",\n  \"specialty\": \"ALL\",\n  \"rating\": 4\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tailor-shop/update/{{tailorShopId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tailor-shop",
+                "update",
+                "{{tailorShopId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Measurement",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"shoulder\": 44.0,\n  \"chest\": 97.0,\n  \"waist\": 83.0,\n  \"sleeveLength\": 60.0,\n  \"height\": 164.0,\n  \"notes\": \"Updated after fitting\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/measurement/update/{{measurementId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "measurement",
+                "update",
+                "{{measurementId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Order",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{tailorShopId}},\n  \"category\": \"ABAYA\",\n  \"fabricType\": \"Crepe Premium\",\n  \"color\": \"Black\",\n  \"price\": 470.0,\n  \"status\": \"ACCEPTED\",\n  \"orderDate\": \"2026-05-14\",\n  \"deliveryDate\": \"2026-06-03\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/update/{{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "update",
+                "{{orderId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Orders by Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/category/ABAYA",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "category",
+                "ABAYA"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Orders by Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/status/READY",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "status",
+                "READY"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Order",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/delete/{{orderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "delete",
+                "{{orderId}}"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
