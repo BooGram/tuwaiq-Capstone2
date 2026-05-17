@@ -47,7 +47,7 @@
         "url": "{{baseUrl}}/api/v1/tailor-shop/add",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"name\": \"Makkah Tailors\",\n  \"ownerName\": \"Khaled\",\n  \"email\": \"shop@example.com\",\n  \"phoneNumber\": \"0512345678\",\n  \"city\": \"Makkah\",\n  \"specialty\": \"ALL\",\n  \"rating\": 5\n}"
+          "raw": "{\n  \"name\": \"Makkah Tailors\",\n  \"ownerName\": \"Khaled\",\n  \"email\": \"shop@example.com\",\n  \"phoneNumber\": \"0512345678\",\n  \"city\": \"Makkah\",\n  \"specialty\": \"ALL\"\n}"
         }
       }
     },
@@ -95,7 +95,7 @@
         "url": "{{baseUrl}}/api/v1/order/create",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"customerId\": 1,\n  \"tailorShopId\": 1,\n  \"category\": \"THOBE\",\n  \"fabricType\": \"Cotton\",\n  \"color\": \"White\",\n  \"price\": 250.0,\n  \"status\": \"PENDING\",\n  \"orderDate\": \"2026-05-14\",\n  \"deliveryDate\": \"2026-05-20\"\n}"
+          "raw": "{\n  \"customerId\": 1,\n  \"tailorShopId\": 1,\n  \"category\": \"THOBE\",\n  \"fabricType\": \"Cotton\",\n  \"color\": \"White\",\n  \"status\": \"PENDING\",\n  \"orderDate\": \"2026-05-14\",\n  \"deliveryDate\": \"2026-05-20\"\n}"
         }
       }
     },
@@ -121,10 +121,10 @@
       }
     },
     {
-      "name": "Order - AI Trends",
+      "name": "Order - AI Suggestions THOBE",
       "request": {
         "method": "GET",
-        "url": "{{baseUrl}}/api/v1/order/ai/order-trends"
+        "url": "{{baseUrl}}/api/v1/order/ai/suggest/THOBE"
       }
     }
   ]

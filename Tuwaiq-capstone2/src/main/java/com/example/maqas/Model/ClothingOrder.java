@@ -9,11 +9,11 @@ import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Check;
+import org.hibernate.annotations.DynamicInsert;
 
 import java.time.LocalDate;
 
@@ -49,15 +49,12 @@ public class ClothingOrder {
     @NotEmpty(message = "Color must not be empty")
     private String color;
 
-    @Column(nullable = false)
-    @NotNull(message = "Price must not be null")
-    @Positive(message = "Price must be positive")
+    @Column
     private Double price;
 
-    @Column(nullable = false, length = 20,columnDefinition = "VARCHAR(20) DEFAULT 'PENDING'")
-    @Check(constraints = "status IN ('PENDING','ACCEPTED','IN_PROGRESS','READY','DELIVERED','CANCELLED')")
-    @NotEmpty(message = "Status must not be empty")
-    @Pattern(regexp = "^(PENDING|ACCEPTED|IN_PROGRESS|READY|DELIVERED|CANCELLED)$", message = "Status must be valid")
+    @Column(nullable = false, length = 20, columnDefinition = "VARCHAR(20) DEFAULT 'PENDING'")
+    @Check(constraints = "status IN ('PENDING','QUOTED','ACCEPTED','IN_PROGRESS','READY','DELIVERED','CANCELLED','REJECTED')")
+    @Pattern(regexp = "^(PENDING|QUOTED|ACCEPTED|IN_PROGRESS|READY|DELIVERED|CANCELLED|REJECTED)$", message = "Status must be valid")
     private String status = "PENDING";
 
     @Column(nullable = false)

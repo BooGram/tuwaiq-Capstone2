@@ -20,7 +20,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.Comparator;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -78,6 +78,12 @@ public class ClothingOrderService {
         if (clothingOrder.getDeliveryDate().isBefore(clothingOrder.getOrderDate())) {
             throw new ApiException("Delivery date must be after order date");
         }
+        if (!clothingOrder.getStatus().equals("PENDING")) {
+            throw new ApiException("New order status must be PENDING");
+        }
+        if (clothingOrder.getPrice() != null) {
+            throw new ApiException("Customer cannot set the price when creating an order");
+        }
 
         clothingOrderRepository.save(clothingOrder);
         sendOrderCreatedNotification(customer, clothingOrder);
@@ -103,6 +109,9 @@ public class ClothingOrderService {
         }
         if (clothingOrder.getDeliveryDate().isBefore(clothingOrder.getOrderDate())) {
             throw new ApiException("Delivery date must be after order date");
+        }
+        if (clothingOrder.getPrice() != null && clothingOrder.getPrice() <= 0) {
+            throw new ApiException("Price must be positive");
         }
 
         oldClothingOrder.setCustomerId(clothingOrder.getCustomerId());
@@ -134,11 +143,79 @@ public class ClothingOrderService {
         if (clothingOrder == null) {
             throw new ApiException("Clothing order not found");
         }
-        if (!status.matches("^(PENDING|ACCEPTED|IN_PROGRESS|READY|DELIVERED|CANCELLED)$")) {
-            throw new ApiException("Status must be PENDING, ACCEPTED, IN_PROGRESS, READY, DELIVERED, or CANCELLED");
+        if (!status.matches("^(PENDING|QUOTED|ACCEPTED|IN_PROGRESS|READY|DELIVERED|CANCELLED|REJECTED)$")) {
+            throw new ApiException("Status must be PENDING, QUOTED, ACCEPTED, IN_PROGRESS, READY, DELIVERED, CANCELLED, or REJECTED");
+        }
+        if (status.equals("QUOTED")) {
+            throw new ApiException("Use the quote endpoint to send a price quote");
+        }
+        if (status.equals("ACCEPTED")) {
+            throw new ApiException("Customer must accept the quote using the accept quote endpoint");
+        }
+        if (status.equals("REJECTED")) {
+            throw new ApiException("Customer must reject the quote using the reject quote endpoint");
+        }
+        if ((status.equals("IN_PROGRESS") || status.equals("READY") || status.equals("DELIVERED")) &&
+                !(clothingOrder.getStatus().equals("ACCEPTED") || clothingOrder.getStatus().equals("IN_PROGRESS") || clothingOrder.getStatus().equals("READY"))) {
+            throw new ApiException("Customer must accept the price quote before the order moves forward");
         }
 
         clothingOrder.setStatus(status);
+        clothingOrderRepository.save(clothingOrder);
+
+        Customer customer = customerRepository.getCustomerById(clothingOrder.getCustomerId());
+        sendOrderStatusChangedNotification(customer, clothingOrder);
+    }
+
+    public void setOrderPrice(Integer orderId, Double price) {
+        ClothingOrder clothingOrder = clothingOrderRepository.getClothingOrderById(orderId);
+
+        if (clothingOrder == null) {
+            throw new ApiException("Clothing order not found");
+        }
+        if (price == null || price <= 0) {
+            throw new ApiException("Price must be positive");
+        }
+        if (!clothingOrder.getStatus().equals("PENDING")) {
+            throw new ApiException("Only pending orders can receive a price quote");
+        }
+
+        clothingOrder.setPrice(price);
+        clothingOrder.setStatus("QUOTED");
+        clothingOrderRepository.save(clothingOrder);
+
+        Customer customer = customerRepository.getCustomerById(clothingOrder.getCustomerId());
+        sendPriceQuoteNotification(customer, clothingOrder);
+    }
+
+    public void acceptPriceQuote(Integer orderId) {
+        ClothingOrder clothingOrder = clothingOrderRepository.getClothingOrderById(orderId);
+
+        if (clothingOrder == null) {
+            throw new ApiException("Clothing order not found");
+        }
+        if (!clothingOrder.getStatus().equals("QUOTED")) {
+            throw new ApiException("Only quoted orders can be accepted");
+        }
+
+        clothingOrder.setStatus("ACCEPTED");
+        clothingOrderRepository.save(clothingOrder);
+
+        Customer customer = customerRepository.getCustomerById(clothingOrder.getCustomerId());
+        sendOrderStatusChangedNotification(customer, clothingOrder);
+    }
+
+    public void rejectPriceQuote(Integer orderId) {
+        ClothingOrder clothingOrder = clothingOrderRepository.getClothingOrderById(orderId);
+
+        if (clothingOrder == null) {
+            throw new ApiException("Clothing order not found");
+        }
+        if (!clothingOrder.getStatus().equals("QUOTED")) {
+            throw new ApiException("Only quoted orders can be rejected");
+        }
+
+        clothingOrder.setStatus("REJECTED");
         clothingOrderRepository.save(clothingOrder);
 
         Customer customer = customerRepository.getCustomerById(clothingOrder.getCustomerId());
@@ -170,21 +247,41 @@ public class ClothingOrderService {
     }
 
     public List<ClothingOrder> getOrdersByStatus(String status) {
-        if (!status.matches("^(PENDING|ACCEPTED|IN_PROGRESS|READY|DELIVERED|CANCELLED)$")) {
-            throw new ApiException("Status must be PENDING, ACCEPTED, IN_PROGRESS, READY, DELIVERED, or CANCELLED");
+        if (!status.matches("^(PENDING|QUOTED|ACCEPTED|IN_PROGRESS|READY|DELIVERED|CANCELLED|REJECTED)$")) {
+            throw new ApiException("Status must be PENDING, QUOTED, ACCEPTED, IN_PROGRESS, READY, DELIVERED, CANCELLED, or REJECTED");
         }
 
         return clothingOrderRepository.findClothingOrdersByStatus(status);
     }
 
-    public String getOrderTrends() {
+    public String getClothingSuggestions(String category) {
+        validateCategory(category);
+
         List<ClothingOrder> orders = clothingOrderRepository.findAll();
 
         if (orders.isEmpty()) {
-            throw new ApiException("No orders available for analysis");
+            throw new ApiException("No orders available for suggestions");
         }
 
-        String localAnalysis = getLocalOrderTrends(orders);
+        LocalDate now = LocalDate.now();
+
+        List<ClothingOrder> currentMonthOrders = orders.stream()
+                .filter(order -> order.getCategory().equals(category))
+                .filter(order -> order.getOrderDate().getMonth() == now.getMonth())
+                .filter(order -> order.getOrderDate().getYear() == now.getYear())
+                .toList();
+
+        List<ClothingOrder> categoryOrders = orders.stream()
+                .filter(order -> order.getCategory().equals(category))
+                .toList();
+
+        List<ClothingOrder> ordersForSuggestion = currentMonthOrders.isEmpty() ? categoryOrders : currentMonthOrders;
+
+        if (ordersForSuggestion.isEmpty()) {
+            throw new ApiException("No previous orders found for this category");
+        }
+
+        String localAnalysis = getLocalClothingSuggestions(category, ordersForSuggestion, !currentMonthOrders.isEmpty());
 
         if (!openAiChatGptEnabled) {
             return localAnalysis;
@@ -195,36 +292,43 @@ public class ClothingOrderService {
         }
 
         try {
-            return askChatGptForOrderTrends(orders);
+            return askChatGptForClothingSuggestions(category, ordersForSuggestion, !currentMonthOrders.isEmpty());
         } catch (Exception e) {
-            return localAnalysis + " ChatGPT request failed, so local analysis was returned.";
+            return localAnalysis + " ChatGPT request failed, so local suggestions were returned.";
         }
     }
 
-    private String getLocalOrderTrends(List<ClothingOrder> orders) {
-        String mostOrderedCategory = getMostCommonValue(orders.stream()
-                .collect(Collectors.groupingBy(ClothingOrder::getCategory, Collectors.counting())));
-
-        String mostCommonStatus = getMostCommonValue(orders.stream()
-                .collect(Collectors.groupingBy(ClothingOrder::getStatus, Collectors.counting())));
-
-        Double totalRevenue = orders.stream()
-                .mapToDouble(ClothingOrder::getPrice)
-                .sum();
-
-        return "Local order trends: Most ordered category is " + mostOrderedCategory +
-                ", most common status is " + mostCommonStatus +
-                ", total revenue is " + totalRevenue +
-                ", and total orders are " + orders.size() + ".";
+    private void validateCategory(String category) {
+        if (!category.matches("^(THOBE|ABAYA|DRESS|UNIFORM)$")) {
+            throw new ApiException("Category must be THOBE, ABAYA, DRESS, or UNIFORM");
+        }
     }
 
-    private String askChatGptForOrderTrends(List<ClothingOrder> orders) throws Exception {
-        String prompt = buildChatGptPrompt(orders);
+    private String getLocalClothingSuggestions(String category, List<ClothingOrder> orders, Boolean currentMonthData) {
+        String colors = getTopValues(orders.stream()
+                .collect(Collectors.groupingBy(ClothingOrder::getColor, Collectors.counting())));
+
+        String fabrics = getTopValues(orders.stream()
+                .collect(Collectors.groupingBy(ClothingOrder::getFabricType, Collectors.counting())));
+
+        String combinations = getTopValues(orders.stream()
+                .collect(Collectors.groupingBy(order -> order.getColor() + " with " + order.getFabricType(), Collectors.counting())));
+
+        String source = currentMonthData ? "current month orders" : "previous orders";
+
+        return "Based on " + source + ", customers choosing " + category +
+                " are trending toward these colors: " + colors +
+                ". Popular fabric types are: " + fabrics +
+                ". Suggested combinations: " + combinations + ".";
+    }
+
+    private String askChatGptForClothingSuggestions(String category, List<ClothingOrder> orders, Boolean currentMonthData) throws Exception {
+        String prompt = buildChatGptPrompt(category, orders, currentMonthData);
         String jsonBody = "{"
                 + "\"model\":\"" + escapeJson(openAiModel) + "\","
                 + "\"max_tokens\":300,"
                 + "\"messages\":["
-                + "{\"role\":\"system\",\"content\":\"" + escapeJson("You are a helpful business analyst for a tailoring platform.") + "\"},"
+                + "{\"role\":\"system\",\"content\":\"" + escapeJson("You are a helpful clothing style assistant for customers using a tailoring platform.") + "\"},"
                 + "{\"role\":\"user\",\"content\":\"" + escapeJson(prompt) + "\"}"
                 + "]"
                 + "}";
@@ -245,24 +349,28 @@ public class ClothingOrderService {
         return extractChatGptText(response.body());
     }
 
-    private String buildChatGptPrompt(List<ClothingOrder> orders) {
+    private String buildChatGptPrompt(String category, List<ClothingOrder> orders, Boolean currentMonthData) {
         StringBuilder prompt = new StringBuilder();
-        prompt.append("You are analyzing order data for Maqas, a tailoring platform. ");
-        prompt.append("Give a short business insight summary for an admin. ");
-        prompt.append("Mention most common category, status, total revenue, and one useful recommendation. ");
-        prompt.append("Keep it under 5 sentences. Orders: ");
+        prompt.append("A customer is unsure what options to select for a custom ")
+                .append(category)
+                .append(" order in Maqas. ");
+        prompt.append("Use these ")
+                .append(currentMonthData ? "current month" : "previous")
+                .append(" orders to suggest trending colors, fabric types, and popular combinations. ");
+        prompt.append("Do not talk like an admin report. Talk directly to the customer. ");
+        prompt.append("Keep it friendly, practical, and under 5 sentences. Orders: ");
 
         for (ClothingOrder order : orders) {
             prompt.append("Order ")
                     .append(order.getId())
                     .append(": category=")
                     .append(order.getCategory())
-                    .append(", status=")
-                    .append(order.getStatus())
-                    .append(", price=")
-                    .append(order.getPrice())
-                    .append(", shopId=")
-                    .append(order.getTailorShopId())
+                    .append(", color=")
+                    .append(order.getColor())
+                    .append(", fabric=")
+                    .append(order.getFabricType())
+                    .append(", date=")
+                    .append(order.getOrderDate())
                     .append("; ");
         }
 
@@ -270,14 +378,26 @@ public class ClothingOrderService {
     }
 
     private String extractChatGptText(String responseBody) {
-        String marker = "\"content\":\"";
+        String marker = "\"content\"";
         int start = responseBody.indexOf(marker);
 
         if (start == -1) {
             return responseBody;
         }
 
-        start += marker.length();
+        start = responseBody.indexOf(":", start);
+
+        if (start == -1) {
+            return responseBody;
+        }
+
+        start = responseBody.indexOf("\"", start);
+
+        if (start == -1) {
+            return responseBody;
+        }
+
+        start++;
         StringBuilder text = new StringBuilder();
         boolean escaping = false;
 
@@ -314,16 +434,17 @@ public class ClothingOrderService {
                 .replace("\t", "\\t");
     }
 
-    private String getMostCommonValue(Map<String, Long> values) {
+    private String getTopValues(Map<String, Long> values) {
         return values.entrySet()
                 .stream()
-                .max(Comparator.comparing(Map.Entry::getValue))
-                .get()
-                .getKey();
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(3)
+                .map(Map.Entry::getKey)
+                .collect(Collectors.joining(", "));
     }
 
     private void sendOrderCreatedNotification(Customer customer, ClothingOrder clothingOrder) {
-        String message = "Your Maqas order #" + clothingOrder.getId() + " has been created with status " + clothingOrder.getStatus();
+        String message = "Hello " + customer.getName() + ", your Maqas order #" + clothingOrder.getId() + " has been created with status " + clothingOrder.getStatus();
         try {
             sendEmail(customer.getEmail(), message);
         } catch (ApiException e) {
@@ -337,7 +458,21 @@ public class ClothingOrderService {
     }
 
     private void sendOrderStatusChangedNotification(Customer customer, ClothingOrder clothingOrder) {
-        String message = "Your Maqas order #" + clothingOrder.getId() + " status changed to " + clothingOrder.getStatus();
+        String message = "Hello " + customer.getName() + ", your Maqas order #" + clothingOrder.getId() + " status changed to " + clothingOrder.getStatus();
+        try {
+            sendEmail(customer.getEmail(), message);
+        } catch (ApiException e) {
+            System.out.println(e.getMessage());
+        }
+        try {
+            sendWhatsApp(customer.getPhoneNumber(), message);
+        } catch (ApiException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    private void sendPriceQuoteNotification(Customer customer, ClothingOrder clothingOrder) {
+        String message = "Hello " + customer.getName() + ", your Maqas order #" + clothingOrder.getId() + " has a new price quote: " + clothingOrder.getPrice() + " SAR. Please accept or reject the quote.";
         try {
             sendEmail(customer.getEmail(), message);
         } catch (ApiException e) {

@@ -52,7 +52,6 @@ public class TailorShopService {
         oldTailorShop.setPhoneNumber(tailorShop.getPhoneNumber());
         oldTailorShop.setCity(tailorShop.getCity());
         oldTailorShop.setSpecialty(tailorShop.getSpecialty());
-        oldTailorShop.setRating(tailorShop.getRating());
 
         tailorShopRepository.save(oldTailorShop);
     }

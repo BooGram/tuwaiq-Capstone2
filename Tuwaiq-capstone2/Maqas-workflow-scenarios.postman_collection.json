@@ -1,0 +1,973 @@
+{
+  "info": {
+    "name": "Maqas Workflow Scenarios",
+    "_postman_id": "maqas-workflow-scenarios",
+    "description": "Workflow-focused Postman collection for Maqas Capstone2. Covers customer setup, tailor shop setup, measurements, order creation, notifications, ChatGPT clothing suggestions, filtering, and error handling.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "customerId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "tailorShopId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "thobeOnlyShopId",
+      "value": "2",
+      "type": "string"
+    },
+    {
+      "key": "measurementId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "abayaOrderId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "thobeOrderId",
+      "value": "4",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Start Here: Create Main Demo Data",
+      "description": "Run this folder first after starting Spring Boot. It creates the main customer, tailor shops, and measurements.",
+      "item": [
+        {
+          "name": "1. Register Customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Customer request succeeded\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                  "});",
+                  "",
+                  "pm.sendRequest(pm.collectionVariables.get(\"baseUrl\") + \"/api/v1/customer/get\", function (err, res) {",
+                  "    if (!err) {",
+                  "        const customers = res.json();",
+                  "        const customer = customers.find(c => c.email === \"noura@example.com\");",
+                  "        if (customer) pm.collectionVariables.set(\"customerId\", customer.id);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Noura Saleh\",\n  \"email\": \"noura@example.com\",\n  \"phoneNumber\": \"0512345678\",\n  \"password\": \"noura123\",\n  \"city\": \"Riyadh\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/customer/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "customer",
+                "add"
+              ]
+            },
+            "description": "Creates the customer used through the demo."
+          }
+        },
+        {
+          "name": "2. Add Main Tailor Shop - Supports All Categories",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Tailor shop request succeeded\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                  "});",
+                  "",
+                  "pm.sendRequest(pm.collectionVariables.get(\"baseUrl\") + \"/api/v1/tailor-shop/get\", function (err, res) {",
+                  "    if (!err) {",
+                  "        const shops = res.json();",
+                  "        const shop = shops.find(s => s.email === \"almashal@example.com\");",
+                  "        if (shop) pm.collectionVariables.set(\"tailorShopId\", shop.id);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Al Mashal Tailors\",\n  \"ownerName\": \"Fahad Alotaibi\",\n  \"email\": \"almashal@example.com\",\n  \"phoneNumber\": \"0598765432\",\n  \"city\": \"Riyadh\",\n  \"specialty\": \"ALL\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tailor-shop/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tailor-shop",
+                "add"
+              ]
+            },
+            "description": "Creates a shop that accepts all order categories."
+          }
+        },
+        {
+          "name": "3. Add THOBE Only Tailor Shop",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"THOBE shop request succeeded\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                  "});",
+                  "",
+                  "pm.sendRequest(pm.collectionVariables.get(\"baseUrl\") + \"/api/v1/tailor-shop/get\", function (err, res) {",
+                  "    if (!err) {",
+                  "        const shops = res.json();",
+                  "        const shop = shops.find(s => s.email === \"althobe@example.com\");",
+                  "        if (shop) pm.collectionVariables.set(\"thobeOnlyShopId\", shop.id);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Al Thobe House\",\n  \"ownerName\": \"Saad Alqahtani\",\n  \"email\": \"althobe@example.com\",\n  \"phoneNumber\": \"0500000002\",\n  \"city\": \"Riyadh\",\n  \"specialty\": \"THOBE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tailor-shop/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tailor-shop",
+                "add"
+              ]
+            },
+            "description": "Creates a THOBE-only shop for the unsupported category error scenario."
+          }
+        },
+        {
+          "name": "4. Save Customer Measurements",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Measurement request succeeded\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                  "});",
+                  "",
+                  "pm.sendRequest(pm.collectionVariables.get(\"baseUrl\") + \"/api/v1/measurement/customer/\" + pm.collectionVariables.get(\"customerId\"), function (err, res) {",
+                  "    if (!err && res.code === 200) {",
+                  "        const measurements = res.json();",
+                  "        if (measurements.length > 0) pm.collectionVariables.set(\"measurementId\", measurements[measurements.length - 1].id);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"shoulder\": 43.5,\n  \"chest\": 96.0,\n  \"waist\": 82.0,\n  \"sleeveLength\": 59.0,\n  \"height\": 164.0,\n  \"notes\": \"Prefers modest loose fit\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/measurement/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "measurement",
+                "add"
+              ]
+            },
+            "description": "Stores measurements linked to the customer."
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Seed Recent Orders for ChatGPT Trends",
+      "description": "Run this folder to create current-month orders. These orders give ChatGPT data to suggest trending colors and fabrics.",
+      "item": [
+        {
+          "name": "1. ABAYA Order - Black Crepe",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"ABAYA order created\", function () { pm.response.to.have.status(200); });",
+                  "pm.sendRequest(pm.collectionVariables.get(\"baseUrl\") + \"/api/v1/order/customer/\" + pm.collectionVariables.get(\"customerId\"), function (err, res) {",
+                  "    if (!err && res.code === 200) {",
+                  "        const orders = res.json().filter(o => o.category === \"ABAYA\");",
+                  "        if (orders.length > 0) pm.collectionVariables.set(\"abayaOrderId\", orders[orders.length - 1].id);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{tailorShopId}},\n  \"category\": \"ABAYA\",\n  \"fabricType\": \"Crepe\",\n  \"color\": \"Black\",\n  \"status\": \"PENDING\",\n  \"orderDate\": \"2026-05-16\",\n  \"deliveryDate\": \"2026-06-01\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "create"
+              ]
+            },
+            "description": "Creates a recent ABAYA order. This also triggers email/WhatsApp notification logic."
+          }
+        },
+        {
+          "name": "2. ABAYA Order - Black Crepe Premium",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{tailorShopId}},\n  \"category\": \"ABAYA\",\n  \"fabricType\": \"Crepe Premium\",\n  \"color\": \"Black\",\n  \"status\": \"ACCEPTED\",\n  \"orderDate\": \"2026-05-17\",\n  \"deliveryDate\": \"2026-06-03\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "create"
+              ]
+            },
+            "description": "Adds more ABAYA trend data."
+          }
+        },
+        {
+          "name": "3. ABAYA Order - Navy Silk",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{tailorShopId}},\n  \"category\": \"ABAYA\",\n  \"fabricType\": \"Silk\",\n  \"color\": \"Navy\",\n  \"status\": \"PENDING\",\n  \"orderDate\": \"2026-05-17\",\n  \"deliveryDate\": \"2026-06-05\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "create"
+              ]
+            }
+          }
+        },
+        {
+          "name": "4. THOBE Order - White Cotton",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"THOBE order created\", function () { pm.response.to.have.status(200); });",
+                  "pm.sendRequest(pm.collectionVariables.get(\"baseUrl\") + \"/api/v1/order/customer/\" + pm.collectionVariables.get(\"customerId\"), function (err, res) {",
+                  "    if (!err && res.code === 200) {",
+                  "        const orders = res.json().filter(o => o.category === \"THOBE\");",
+                  "        if (orders.length > 0) pm.collectionVariables.set(\"thobeOrderId\", orders[orders.length - 1].id);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{tailorShopId}},\n  \"category\": \"THOBE\",\n  \"fabricType\": \"Cotton\",\n  \"color\": \"White\",\n  \"status\": \"PENDING\",\n  \"orderDate\": \"2026-05-17\",\n  \"deliveryDate\": \"2026-06-02\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "create"
+              ]
+            }
+          }
+        },
+        {
+          "name": "5. THOBE Order - White Linen",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{tailorShopId}},\n  \"category\": \"THOBE\",\n  \"fabricType\": \"Linen\",\n  \"color\": \"White\",\n  \"status\": \"IN_PROGRESS\",\n  \"orderDate\": \"2026-05-17\",\n  \"deliveryDate\": \"2026-06-04\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "create"
+              ]
+            }
+          }
+        },
+        {
+          "name": "6. THOBE Order - Beige Cotton",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{tailorShopId}},\n  \"category\": \"THOBE\",\n  \"fabricType\": \"Cotton\",\n  \"color\": \"Beige\",\n  \"status\": \"PENDING\",\n  \"orderDate\": \"2026-05-17\",\n  \"deliveryDate\": \"2026-06-06\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "create"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Main Customer Workflow Demo",
+      "description": "Use this folder during the presentation to show the customer journey and integrations.",
+      "item": [
+        {
+          "name": "1. Browse Tailor Shops in Riyadh",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tailor-shop/city/Riyadh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tailor-shop",
+                "city",
+                "Riyadh"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2. View Customer Measurements",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/measurement/customer/{{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "measurement",
+                "customer",
+                "{{customerId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "3. View Customer Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/customer/{{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "customer",
+                "{{customerId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "4. Tailor Sends Price Quote",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/quote/{{abayaOrderId}}/420",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "quote",
+                "{{abayaOrderId}}",
+                "420"
+              ]
+            },
+            "description": "Tailor shop reviews the order and sends a price quote to the customer. This triggers email and WhatsApp."
+          }
+        },
+        {
+          "name": "5. Customer Accepts Price Quote",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/accept-quote/{{abayaOrderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "accept-quote",
+                "{{abayaOrderId}}"
+              ]
+            },
+            "description": "Customer accepts the quoted price, so the order moves from QUOTED to ACCEPTED."
+          }
+        },
+        {
+          "name": "6. Update Order Status - READY",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/change-status/{{abayaOrderId}}/READY",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "change-status",
+                "{{abayaOrderId}}",
+                "READY"
+              ]
+            },
+            "description": "Tailor updates the accepted order. This triggers email and WhatsApp notification for the customer."
+          }
+        },
+        {
+          "name": "7. ChatGPT Suggestions for ABAYA",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/ai/suggest/ABAYA",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "ai",
+                "suggest",
+                "ABAYA"
+              ]
+            },
+            "description": "Customer-facing AI suggestion based on current month ABAYA orders."
+          }
+        },
+        {
+          "name": "8. ChatGPT Suggestions for THOBE",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/ai/suggest/THOBE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "ai",
+                "suggest",
+                "THOBE"
+              ]
+            },
+            "description": "Customer-facing AI suggestion based on current month THOBE orders."
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Filtering and Search Scenarios",
+      "description": "Shows extra endpoints for browsing and filtering.",
+      "item": [
+        {
+          "name": "Get All Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/get",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "get"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Orders by Category - ABAYA",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/category/ABAYA",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "category",
+                "ABAYA"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Orders by Status - READY",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/status/READY",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "status",
+                "READY"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Tailor Shops by Specialty - THOBE",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/tailor-shop/specialty/THOBE",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "tailor-shop",
+                "specialty",
+                "THOBE"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Error Handling Scenarios",
+      "description": "Shows clean 400 errors with meaningful messages.",
+      "item": [
+        {
+          "name": "Duplicate Customer Email",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sara Saleh\",\n  \"email\": \"noura@example.com\",\n  \"phoneNumber\": \"0500000001\",\n  \"password\": \"sara123\",\n  \"city\": \"Jeddah\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/customer/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "customer",
+                "add"
+              ]
+            },
+            "description": "Expected: 400, Email already exists."
+          }
+        },
+        {
+          "name": "Duplicate Customer Phone Number",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Sara Saleh\",\n  \"email\": \"sara@example.com\",\n  \"phoneNumber\": \"0512345678\",\n  \"password\": \"sara123\",\n  \"city\": \"Jeddah\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/customer/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "customer",
+                "add"
+              ]
+            },
+            "description": "Expected: 400, Phone number already exists."
+          }
+        },
+        {
+          "name": "Invalid Order Status",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/change-status/{{abayaOrderId}}/FINISHED",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "change-status",
+                "{{abayaOrderId}}",
+                "FINISHED"
+              ]
+            },
+            "description": "Expected: 400 with valid status message."
+          }
+        },
+        {
+          "name": "Unsupported Category for THOBE Shop",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{thobeOnlyShopId}},\n  \"category\": \"ABAYA\",\n  \"fabricType\": \"Crepe\",\n  \"color\": \"Black\",\n  \"status\": \"PENDING\",\n  \"orderDate\": \"2026-05-17\",\n  \"deliveryDate\": \"2026-06-08\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/create",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "create"
+              ]
+            },
+            "description": "Expected: 400, Tailor shop does not support this order category."
+          }
+        },
+        {
+          "name": "AI Suggestion for Category with No Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/ai/suggest/DRESS",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "ai",
+                "suggest",
+                "DRESS"
+              ]
+            },
+            "description": "Expected: 400 if no DRESS orders exist."
+          }
+        },
+        {
+          "name": "Accept Quote Before Tailor Sets Price",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/accept-quote/{{thobeOrderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "accept-quote",
+                "{{thobeOrderId}}"
+              ]
+            },
+            "description": "Expected: 400, Only quoted orders can be accepted."
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - CRUD Reference",
+      "description": "Extra CRUD endpoints for grading checks.",
+      "item": [
+        {
+          "name": "Update Customer",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Noura Saleh Updated\",\n  \"email\": \"noura.updated@example.com\",\n  \"phoneNumber\": \"0512345678\",\n  \"password\": \"noura456\",\n  \"city\": \"Jeddah\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/customer/update/{{customerId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "customer",
+                "update",
+                "{{customerId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Measurement",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"shoulder\": 44.0,\n  \"chest\": 97.0,\n  \"waist\": 83.0,\n  \"sleeveLength\": 60.0,\n  \"height\": 164.0,\n  \"notes\": \"Updated after fitting\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/measurement/update/{{measurementId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "measurement",
+                "update",
+                "{{measurementId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Order",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{tailorShopId}},\n  \"category\": \"ABAYA\",\n  \"fabricType\": \"Crepe Premium\",\n  \"color\": \"Black\",\n  \"status\": \"ACCEPTED\",\n  \"orderDate\": \"2026-05-17\",\n  \"deliveryDate\": \"2026-06-03\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/order/update/{{abayaOrderId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "order",
+                "update",
+                "{{abayaOrderId}}"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

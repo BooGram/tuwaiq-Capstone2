@@ -2,7 +2,7 @@
   "info": {
     "name": "Maqas Presentation Workflow",
     "_postman_id": "maqas-presentation-workflow",
-    "description": "Clean demo workflow for Maqas Capstone2: customer registration, tailor shop setup, measurements, order creation, notifications, filtering, and ChatGPT trends.",
+    "description": "Clean demo workflow for Maqas Capstone2: customer registration, tailor shop setup, measurements, order creation, notifications, filtering, and ChatGPT clothing suggestions.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -124,7 +124,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Al Mashal Tailors\",\n  \"ownerName\": \"Fahad Alotaibi\",\n  \"email\": \"almashal@example.com\",\n  \"phoneNumber\": \"0598765432\",\n  \"city\": \"Riyadh\",\n  \"specialty\": \"ALL\",\n  \"rating\": 5\n}"
+              "raw": "{\n  \"name\": \"Al Mashal Tailors\",\n  \"ownerName\": \"Fahad Alotaibi\",\n  \"email\": \"almashal@example.com\",\n  \"phoneNumber\": \"0598765432\",\n  \"city\": \"Riyadh\",\n  \"specialty\": \"ALL\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/tailor-shop/add",
@@ -226,7 +226,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{tailorShopId}},\n  \"category\": \"ABAYA\",\n  \"fabricType\": \"Crepe\",\n  \"color\": \"Black\",\n  \"price\": 420.0,\n  \"status\": \"PENDING\",\n  \"orderDate\": \"2026-05-14\",\n  \"deliveryDate\": \"2026-06-01\"\n}"
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{tailorShopId}},\n  \"category\": \"ABAYA\",\n  \"fabricType\": \"Crepe\",\n  \"color\": \"Black\",\n  \"status\": \"PENDING\",\n  \"orderDate\": \"2026-05-14\",\n  \"deliveryDate\": \"2026-06-01\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/order/create",
@@ -373,12 +373,12 @@
           }
         },
         {
-          "name": "7. ChatGPT Order Trends",
+          "name": "7. ChatGPT Clothing Suggestions - ABAYA",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/order/ai/order-trends",
+              "raw": "{{baseUrl}}/api/v1/order/ai/suggest/ABAYA",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -387,10 +387,11 @@
                 "v1",
                 "order",
                 "ai",
-                "order-trends"
+                "suggest",
+                "ABAYA"
               ]
             },
-            "description": "Shows the ChatGPT trend summary from database order data."
+            "description": "Shows customer-facing ChatGPT suggestions for ABAYA colors and fabric types based on recent orders."
           }
         }
       ]
@@ -491,7 +492,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{tailorShopId}},\n  \"category\": \"UNIFORM\",\n  \"fabricType\": \"Polyester\",\n  \"color\": \"Navy\",\n  \"price\": 300.0,\n  \"status\": \"PENDING\",\n  \"orderDate\": \"2026-05-14\",\n  \"deliveryDate\": \"2026-06-05\"\n}"
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{tailorShopId}},\n  \"category\": \"UNIFORM\",\n  \"fabricType\": \"Polyester\",\n  \"color\": \"Navy\",\n  \"status\": \"PENDING\",\n  \"orderDate\": \"2026-05-14\",\n  \"deliveryDate\": \"2026-06-05\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/order/create",
@@ -555,7 +556,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Al Mashal Tailors Updated\",\n  \"ownerName\": \"Fahad Alotaibi\",\n  \"email\": \"almashal.updated@example.com\",\n  \"phoneNumber\": \"0598765432\",\n  \"city\": \"Riyadh\",\n  \"specialty\": \"ALL\",\n  \"rating\": 4\n}"
+              "raw": "{\n  \"name\": \"Al Mashal Tailors Updated\",\n  \"ownerName\": \"Fahad Alotaibi\",\n  \"email\": \"almashal.updated@example.com\",\n  \"phoneNumber\": \"0598765432\",\n  \"city\": \"Riyadh\",\n  \"specialty\": \"ALL\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/tailor-shop/update/{{tailorShopId}}",
@@ -613,7 +614,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{tailorShopId}},\n  \"category\": \"ABAYA\",\n  \"fabricType\": \"Crepe Premium\",\n  \"color\": \"Black\",\n  \"price\": 470.0,\n  \"status\": \"ACCEPTED\",\n  \"orderDate\": \"2026-05-14\",\n  \"deliveryDate\": \"2026-06-03\"\n}"
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{tailorShopId}},\n  \"category\": \"ABAYA\",\n  \"fabricType\": \"Crepe Premium\",\n  \"color\": \"Black\",\n  \"status\": \"ACCEPTED\",\n  \"orderDate\": \"2026-05-14\",\n  \"deliveryDate\": \"2026-06-03\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/order/update/{{orderId}}",

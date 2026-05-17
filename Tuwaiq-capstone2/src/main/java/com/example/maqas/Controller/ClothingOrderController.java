@@ -79,6 +79,36 @@ public class ClothingOrderController {
         }
     }
 
+    @PutMapping("/quote/{orderId}/{price}")
+    public ResponseEntity<?> setOrderPrice(@PathVariable Integer orderId, @PathVariable Double price) {
+        try {
+            clothingOrderService.setOrderPrice(orderId, price);
+            return ResponseEntity.status(200).body(new ApiResponse("Order price quote sent successfully"));
+        } catch (ApiException e) {
+            return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
+        }
+    }
+
+    @PutMapping("/accept-quote/{orderId}")
+    public ResponseEntity<?> acceptPriceQuote(@PathVariable Integer orderId) {
+        try {
+            clothingOrderService.acceptPriceQuote(orderId);
+            return ResponseEntity.status(200).body(new ApiResponse("Order price quote accepted successfully"));
+        } catch (ApiException e) {
+            return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
+        }
+    }
+
+    @PutMapping("/reject-quote/{orderId}")
+    public ResponseEntity<?> rejectPriceQuote(@PathVariable Integer orderId) {
+        try {
+            clothingOrderService.rejectPriceQuote(orderId);
+            return ResponseEntity.status(200).body(new ApiResponse("Order price quote rejected successfully"));
+        } catch (ApiException e) {
+            return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
+        }
+    }
+
     @GetMapping("/customer/{customerId}")
     public ResponseEntity<?> getOrdersByCustomerId(@PathVariable Integer customerId) {
         try {
@@ -115,10 +145,10 @@ public class ClothingOrderController {
         }
     }
 
-    @GetMapping("/ai/order-trends")
-    public ResponseEntity<?> getOrderTrends() {
+    @GetMapping("/ai/suggest/{category}")
+    public ResponseEntity<?> getClothingSuggestions(@PathVariable String category) {
         try {
-            return ResponseEntity.status(200).body(clothingOrderService.getOrderTrends());
+            return ResponseEntity.status(200).body(clothingOrderService.getClothingSuggestions(category));
         } catch (ApiException e) {
             return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
         }
