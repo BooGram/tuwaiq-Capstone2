@@ -5,7 +5,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -13,7 +12,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Check;
-import org.hibernate.annotations.DynamicInsert;
 
 import java.time.LocalDate;
 
@@ -34,6 +32,10 @@ public class ClothingOrder {
     @Column(nullable = false)
     @NotNull(message = "Tailor shop id must not be null")
     private Integer tailorShopId;
+
+    @Column(nullable = false)
+    @NotNull(message = "Measurement id must not be null")
+    private Integer measurementId;
 
     @Column(nullable = false, length = 20)
     @Check(constraints = "category IN ('THOBE','ABAYA','DRESS','UNIFORM')")
@@ -61,8 +63,4 @@ public class ClothingOrder {
     @NotNull(message = "Order date must not be null")
     private LocalDate orderDate;
 
-    @Column(nullable = false)
-    @NotNull(message = "Delivery date must not be null")
-    @FutureOrPresent(message = "Delivery date must be today or in the future")
-    private LocalDate deliveryDate;
 }

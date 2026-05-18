@@ -40,6 +40,26 @@
       "key": "thobeOrderId",
       "value": "4",
       "type": "string"
+    },
+    {
+      "key": "measurementRequestId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "shopOwnerId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "abayaShopId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "thobeShopId",
+      "value": "2",
+      "type": "string"
     }
   ],
   "item": [
@@ -98,7 +118,57 @@
           }
         },
         {
-          "name": "2. Add Main Tailor Shop - Supports All Categories",
+          "name": "2. Register Shop Owner",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Shop owner request succeeded\", function () {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400]);",
+                  "});",
+                  "",
+                  "pm.sendRequest(pm.collectionVariables.get(\"baseUrl\") + \"/api/v1/shop-owner/get\", function (err, res) {",
+                  "    if (!err) {",
+                  "        const owners = res.json();",
+                  "        const owner = owners.find(o => o.email === \"fahad.owner@example.com\");",
+                  "        if (owner) pm.collectionVariables.set(\"shopOwnerId\", owner.id);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Fahad Alotaibi\",\n  \"email\": \"fahad.owner@example.com\",\n  \"phoneNumber\": \"0500000001\",\n  \"password\": \"owner123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/shop-owner/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "shop-owner",
+                "add"
+              ]
+            },
+            "description": "Creates the shop owner account before creating tailor shops linked by ownerId."
+          }
+        },
+        {
+          "name": "3. Add ABAYA Tailor Shop",
           "event": [
             {
               "listen": "test",
@@ -112,8 +182,8 @@
                   "pm.sendRequest(pm.collectionVariables.get(\"baseUrl\") + \"/api/v1/tailor-shop/get\", function (err, res) {",
                   "    if (!err) {",
                   "        const shops = res.json();",
-                  "        const shop = shops.find(s => s.email === \"almashal@example.com\");",
-                  "        if (shop) pm.collectionVariables.set(\"tailorShopId\", shop.id);",
+                  "        const shop = shops.find(s => s.name === \"Al Mashal Abayas\");",
+                  "        if (shop) pm.collectionVariables.set(\"tailorShopId\", shop.id);\n            pm.collectionVariables.set(\"abayaShopId\", shop.id);",
                   "    }",
                   "});"
                 ]
@@ -130,7 +200,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Al Mashal Tailors\",\n  \"ownerName\": \"Fahad Alotaibi\",\n  \"email\": \"almashal@example.com\",\n  \"phoneNumber\": \"0598765432\",\n  \"city\": \"Riyadh\",\n  \"specialty\": \"ALL\"\n}"
+              "raw": "{\n  \"name\": \"Al Mashal Abayas\",\n  \"ownerId\": {{shopOwnerId}},\n  \"phoneNumber\": \"0598765432\",\n  \"city\": \"Riyadh\",\n  \"specialty\": \"ABAYA\",\n  \"offersHomeMeasurement\": true,\n  \"measurementVisitPrice\": 80,\n  \"freeMeasurementWithOrder\": true\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/tailor-shop/add",
@@ -144,11 +214,11 @@
                 "add"
               ]
             },
-            "description": "Creates a shop that accepts all order categories."
+            "description": "Creates an ABAYA-specialized tailor shop linked to the shop owner."
           }
         },
         {
-          "name": "3. Add THOBE Only Tailor Shop",
+          "name": "4. Add THOBE Tailor Shop",
           "event": [
             {
               "listen": "test",
@@ -162,8 +232,8 @@
                   "pm.sendRequest(pm.collectionVariables.get(\"baseUrl\") + \"/api/v1/tailor-shop/get\", function (err, res) {",
                   "    if (!err) {",
                   "        const shops = res.json();",
-                  "        const shop = shops.find(s => s.email === \"althobe@example.com\");",
-                  "        if (shop) pm.collectionVariables.set(\"thobeOnlyShopId\", shop.id);",
+                  "        const shop = shops.find(s => s.name === \"Al Thobe House\");",
+                  "        if (shop) pm.collectionVariables.set(\"thobeOnlyShopId\", shop.id);\n            pm.collectionVariables.set(\"thobeShopId\", shop.id);",
                   "    }",
                   "});"
                 ]
@@ -180,7 +250,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Al Thobe House\",\n  \"ownerName\": \"Saad Alqahtani\",\n  \"email\": \"althobe@example.com\",\n  \"phoneNumber\": \"0500000002\",\n  \"city\": \"Riyadh\",\n  \"specialty\": \"THOBE\"\n}"
+              "raw": "{\n  \"name\": \"Al Thobe House\",\n  \"ownerId\": {{shopOwnerId}},\n  \"phoneNumber\": \"0500000002\",\n  \"city\": \"Riyadh\",\n  \"specialty\": \"THOBE\",\n  \"offersHomeMeasurement\": true,\n  \"measurementVisitPrice\": 60,\n  \"freeMeasurementWithOrder\": true\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/tailor-shop/add",
@@ -194,11 +264,101 @@
                 "add"
               ]
             },
-            "description": "Creates a THOBE-only shop for the unsupported category error scenario."
+            "description": "Creates a THOBE-specialized tailor shop linked to the shop owner."
           }
         },
         {
-          "name": "4. Save Customer Measurements",
+          "name": "5. Request Measurement Visit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{abayaShopId}},\n  \"city\": \"Riyadh\",\n  \"address\": \"Al Olaya District, Riyadh\",\n  \"preferredDate\": \"2026-05-20\",\n  \"status\": \"PENDING\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/measurement-request/add",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "measurement-request",
+                "add"
+              ]
+            },
+            "description": "Customer does not have measurements yet, so they request a measurement visit from the tailor shop."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Measurement request created\", function () { pm.response.to.have.status(200); });",
+                  "pm.sendRequest(pm.collectionVariables.get(\"baseUrl\") + \"/api/v1/measurement-request/customer/\" + pm.collectionVariables.get(\"customerId\"), function (err, res) {",
+                  "    if (!err && res.code === 200) {",
+                  "        const requests = res.json();",
+                  "        if (requests.length > 0) pm.collectionVariables.set(\"measurementRequestId\", requests[requests.length - 1].id);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "6. Tailor Accepts Measurement Visit",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/measurement-request/change-status/{{measurementRequestId}}/ACCEPTED",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "measurement-request",
+                "change-status",
+                "{{measurementRequestId}}",
+                "ACCEPTED"
+              ]
+            },
+            "description": "Tailor shop accepts the measurement visit request."
+          }
+        },
+        {
+          "name": "7. Tailor Completes Measurement Visit",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/measurement-request/change-status/{{measurementRequestId}}/COMPLETED",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "measurement-request",
+                "change-status",
+                "{{measurementRequestId}}",
+                "COMPLETED"
+              ]
+            },
+            "description": "Tailor shop completes the visit, then the actual measurements can be saved."
+          }
+        },
+        {
+          "name": "8. Save Customer Measurements",
           "event": [
             {
               "listen": "test",
@@ -281,7 +441,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{tailorShopId}},\n  \"category\": \"ABAYA\",\n  \"fabricType\": \"Crepe\",\n  \"color\": \"Black\",\n  \"status\": \"PENDING\",\n  \"orderDate\": \"2026-05-16\",\n  \"deliveryDate\": \"2026-06-01\"\n}"
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{abayaShopId}},\n  \"measurementId\": {{measurementId}},\n  \"category\": \"ABAYA\",\n  \"fabricType\": \"Crepe\",\n  \"color\": \"Black\",\n  \"status\": \"PENDING\",\n  \"orderDate\": \"2026-05-16\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/order/create",
@@ -310,7 +470,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{tailorShopId}},\n  \"category\": \"ABAYA\",\n  \"fabricType\": \"Crepe Premium\",\n  \"color\": \"Black\",\n  \"status\": \"ACCEPTED\",\n  \"orderDate\": \"2026-05-17\",\n  \"deliveryDate\": \"2026-06-03\"\n}"
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{abayaShopId}},\n  \"measurementId\": {{measurementId}},\n  \"category\": \"ABAYA\",\n  \"fabricType\": \"Crepe Premium\",\n  \"color\": \"Black\",\n  \"status\": \"PENDING\",\n  \"orderDate\": \"2026-05-17\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/order/create",
@@ -339,7 +499,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{tailorShopId}},\n  \"category\": \"ABAYA\",\n  \"fabricType\": \"Silk\",\n  \"color\": \"Navy\",\n  \"status\": \"PENDING\",\n  \"orderDate\": \"2026-05-17\",\n  \"deliveryDate\": \"2026-06-05\"\n}"
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{abayaShopId}},\n  \"measurementId\": {{measurementId}},\n  \"category\": \"ABAYA\",\n  \"fabricType\": \"Silk\",\n  \"color\": \"Navy\",\n  \"status\": \"PENDING\",\n  \"orderDate\": \"2026-05-17\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/order/create",
@@ -384,7 +544,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{tailorShopId}},\n  \"category\": \"THOBE\",\n  \"fabricType\": \"Cotton\",\n  \"color\": \"White\",\n  \"status\": \"PENDING\",\n  \"orderDate\": \"2026-05-17\",\n  \"deliveryDate\": \"2026-06-02\"\n}"
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{thobeShopId}},\n  \"measurementId\": {{measurementId}},\n  \"category\": \"THOBE\",\n  \"fabricType\": \"Cotton\",\n  \"color\": \"White\",\n  \"status\": \"PENDING\",\n  \"orderDate\": \"2026-05-17\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/order/create",
@@ -412,7 +572,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{tailorShopId}},\n  \"category\": \"THOBE\",\n  \"fabricType\": \"Linen\",\n  \"color\": \"White\",\n  \"status\": \"IN_PROGRESS\",\n  \"orderDate\": \"2026-05-17\",\n  \"deliveryDate\": \"2026-06-04\"\n}"
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{thobeShopId}},\n  \"measurementId\": {{measurementId}},\n  \"category\": \"THOBE\",\n  \"fabricType\": \"Linen\",\n  \"color\": \"White\",\n  \"status\": \"PENDING\",\n  \"orderDate\": \"2026-05-17\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/order/create",
@@ -440,7 +600,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{tailorShopId}},\n  \"category\": \"THOBE\",\n  \"fabricType\": \"Cotton\",\n  \"color\": \"Beige\",\n  \"status\": \"PENDING\",\n  \"orderDate\": \"2026-05-17\",\n  \"deliveryDate\": \"2026-06-06\"\n}"
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{thobeShopId}},\n  \"measurementId\": {{measurementId}},\n  \"category\": \"THOBE\",\n  \"fabricType\": \"Cotton\",\n  \"color\": \"Beige\",\n  \"status\": \"PENDING\",\n  \"orderDate\": \"2026-05-17\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/order/create",
@@ -528,7 +688,7 @@
             "method": "PUT",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/order/quote/{{abayaOrderId}}/420",
+              "raw": "{{baseUrl}}/api/v1/order/quote/{{shopOwnerId}}/{{abayaOrderId}}/420",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -537,6 +697,7 @@
                 "v1",
                 "order",
                 "quote",
+                "{{shopOwnerId}}",
                 "{{abayaOrderId}}",
                 "420"
               ]
@@ -550,7 +711,7 @@
             "method": "PUT",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/order/accept-quote/{{abayaOrderId}}",
+              "raw": "{{baseUrl}}/api/v1/order/accept-quote/{{customerId}}/{{abayaOrderId}}",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -559,6 +720,7 @@
                 "v1",
                 "order",
                 "accept-quote",
+                "{{customerId}}",
                 "{{abayaOrderId}}"
               ]
             },
@@ -571,7 +733,7 @@
             "method": "PUT",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/order/change-status/{{abayaOrderId}}/READY",
+              "raw": "{{baseUrl}}/api/v1/order/change-status/{{shopOwnerId}}/{{abayaOrderId}}/READY",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -580,6 +742,7 @@
                 "v1",
                 "order",
                 "change-status",
+                "{{shopOwnerId}}",
                 "{{abayaOrderId}}",
                 "READY"
               ]
@@ -786,7 +949,7 @@
             "method": "PUT",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/order/change-status/{{abayaOrderId}}/FINISHED",
+              "raw": "{{baseUrl}}/api/v1/order/change-status/{{shopOwnerId}}/{{abayaOrderId}}/FINISHED",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -795,6 +958,7 @@
                 "v1",
                 "order",
                 "change-status",
+                "{{shopOwnerId}}",
                 "{{abayaOrderId}}",
                 "FINISHED"
               ]
@@ -814,7 +978,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{thobeOnlyShopId}},\n  \"category\": \"ABAYA\",\n  \"fabricType\": \"Crepe\",\n  \"color\": \"Black\",\n  \"status\": \"PENDING\",\n  \"orderDate\": \"2026-05-17\",\n  \"deliveryDate\": \"2026-06-08\"\n}"
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{thobeShopId}},\n  \"measurementId\": {{measurementId}},\n  \"category\": \"ABAYA\",\n  \"fabricType\": \"Crepe\",\n  \"color\": \"Black\",\n  \"status\": \"PENDING\",\n  \"orderDate\": \"2026-05-17\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/order/create",
@@ -859,7 +1023,7 @@
             "method": "PUT",
             "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/v1/order/accept-quote/{{thobeOrderId}}",
+              "raw": "{{baseUrl}}/api/v1/order/accept-quote/{{customerId}}/{{thobeOrderId}}",
               "host": [
                 "{{baseUrl}}"
               ],
@@ -868,6 +1032,7 @@
                 "v1",
                 "order",
                 "accept-quote",
+                "{{customerId}}",
                 "{{thobeOrderId}}"
               ]
             },
@@ -950,7 +1115,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{tailorShopId}},\n  \"category\": \"ABAYA\",\n  \"fabricType\": \"Crepe Premium\",\n  \"color\": \"Black\",\n  \"status\": \"ACCEPTED\",\n  \"orderDate\": \"2026-05-17\",\n  \"deliveryDate\": \"2026-06-03\"\n}"
+              "raw": "{\n  \"customerId\": {{customerId}},\n  \"tailorShopId\": {{abayaShopId}},\n  \"measurementId\": {{measurementId}},\n  \"category\": \"ABAYA\",\n  \"fabricType\": \"Crepe Premium\",\n  \"color\": \"Black\",\n  \"status\": \"PENDING\",\n  \"orderDate\": \"2026-05-17\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/v1/order/update/{{abayaOrderId}}",

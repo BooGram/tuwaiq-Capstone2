@@ -5,9 +5,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -29,14 +30,9 @@ public class TailorShop {
     @Size(min = 3, message = "Shop name must be at least 3 characters")
     private String name;
 
-    @Column(nullable = false, length = 40)
-    @NotEmpty(message = "Owner name must not be empty")
-    private String ownerName;
-
-    @Column(nullable = false, unique = true)
-    @NotEmpty(message = "Email must not be empty")
-    @Email(message = "Email must be valid")
-    private String email;
+    @Column(nullable = false)
+    @NotNull(message = "Owner id must not be null")
+    private Integer ownerId;
 
     @Column(nullable = false, length = 20)
     @NotEmpty(message = "Phone number must not be empty")
@@ -52,5 +48,17 @@ public class TailorShop {
     @NotEmpty(message = "Specialty must not be empty")
     @Pattern(regexp = "^(THOBE|ABAYA|DRESS|UNIFORM|ALL)$", message = "Specialty must be THOBE, ABAYA, DRESS, UNIFORM, or ALL")
     private String specialty;
+
+    @Column(nullable = false)
+    @NotNull(message = "Offers home measurement must not be null")
+    private Boolean offersHomeMeasurement;
+
+    @Column
+    @PositiveOrZero(message = "Measurement visit price must be zero or positive")
+    private Double measurementVisitPrice;
+
+    @Column(nullable = false)
+    @NotNull(message = "Free measurement with order must not be null")
+    private Boolean freeMeasurementWithOrder;
 
 }

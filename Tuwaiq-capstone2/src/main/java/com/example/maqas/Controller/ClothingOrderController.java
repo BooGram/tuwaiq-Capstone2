@@ -69,40 +69,40 @@ public class ClothingOrderController {
         }
     }
 
-    @PutMapping("/change-status/{orderId}/{status}")
-    public ResponseEntity<?> changeOrderStatus(@PathVariable Integer orderId, @PathVariable String status) {
+    @PutMapping("/change-status/{ownerId}/{orderId}/{status}")
+    public ResponseEntity<?> changeOrderStatus(@PathVariable Integer ownerId, @PathVariable Integer orderId, @PathVariable String status) {
         try {
-            clothingOrderService.changeOrderStatus(orderId, status);
+            clothingOrderService.changeOrderStatus(ownerId, orderId, status);
             return ResponseEntity.status(200).body(new ApiResponse("Order status changed successfully"));
         } catch (ApiException e) {
             return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
         }
     }
 
-    @PutMapping("/quote/{orderId}/{price}")
-    public ResponseEntity<?> setOrderPrice(@PathVariable Integer orderId, @PathVariable Double price) {
+    @PutMapping("/quote/{ownerId}/{orderId}/{price}")
+    public ResponseEntity<?> setOrderPrice(@PathVariable Integer ownerId, @PathVariable Integer orderId, @PathVariable Double price) {
         try {
-            clothingOrderService.setOrderPrice(orderId, price);
+            clothingOrderService.setOrderPrice(ownerId, orderId, price);
             return ResponseEntity.status(200).body(new ApiResponse("Order price quote sent successfully"));
         } catch (ApiException e) {
             return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
         }
     }
 
-    @PutMapping("/accept-quote/{orderId}")
-    public ResponseEntity<?> acceptPriceQuote(@PathVariable Integer orderId) {
+    @PutMapping("/accept-quote/{customerId}/{orderId}")
+    public ResponseEntity<?> acceptPriceQuote(@PathVariable Integer customerId, @PathVariable Integer orderId) {
         try {
-            clothingOrderService.acceptPriceQuote(orderId);
+            clothingOrderService.acceptPriceQuote(customerId, orderId);
             return ResponseEntity.status(200).body(new ApiResponse("Order price quote accepted successfully"));
         } catch (ApiException e) {
             return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
         }
     }
 
-    @PutMapping("/reject-quote/{orderId}")
-    public ResponseEntity<?> rejectPriceQuote(@PathVariable Integer orderId) {
+    @PutMapping("/reject-quote/{customerId}/{orderId}")
+    public ResponseEntity<?> rejectPriceQuote(@PathVariable Integer customerId, @PathVariable Integer orderId) {
         try {
-            clothingOrderService.rejectPriceQuote(orderId);
+            clothingOrderService.rejectPriceQuote(customerId, orderId);
             return ResponseEntity.status(200).body(new ApiResponse("Order price quote rejected successfully"));
         } catch (ApiException e) {
             return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));

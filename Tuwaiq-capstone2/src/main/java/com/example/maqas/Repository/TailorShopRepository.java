@@ -10,8 +10,6 @@ import java.util.List;
 public interface TailorShopRepository extends JpaRepository<TailorShop, Integer> {
     TailorShop getTailorShopById(Integer id);
 
-    TailorShop findTailorShopByEmail(String email);
-
     TailorShop findTailorShopByPhoneNumber(String phoneNumber);
 
     List<TailorShop> findTailorShopsByCity(String city);

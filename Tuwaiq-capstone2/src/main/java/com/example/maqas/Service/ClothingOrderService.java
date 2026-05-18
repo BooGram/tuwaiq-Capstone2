@@ -3,9 +3,12 @@ package com.example.maqas.Service;
 import com.example.maqas.Api.ApiException;
 import com.example.maqas.Model.ClothingOrder;
 import com.example.maqas.Model.Customer;
+import com.example.maqas.Model.Measurement;
 import com.example.maqas.Model.TailorShop;
 import com.example.maqas.Repository.ClothingOrderRepository;
 import com.example.maqas.Repository.CustomerRepository;
+import com.example.maqas.Repository.MeasurementRepository;
+import com.example.maqas.Repository.ShopOwnerRepository;
 import com.example.maqas.Repository.TailorShopRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
@@ -32,6 +35,8 @@ public class ClothingOrderService {
     private final ClothingOrderRepository clothingOrderRepository;
     private final CustomerRepository customerRepository;
     private final TailorShopRepository tailorShopRepository;
+    private final MeasurementRepository measurementRepository;
+    private final ShopOwnerRepository shopOwnerRepository;
     private final ObjectProvider<JavaMailSender> javaMailSenderProvider;
 
     @Value("${notification.email.enabled:false}")
@@ -65,6 +70,7 @@ public class ClothingOrderService {
     public void createClothingOrder(ClothingOrder clothingOrder) {
         Customer customer = customerRepository.getCustomerById(clothingOrder.getCustomerId());
         TailorShop tailorShop = tailorShopRepository.getTailorShopById(clothingOrder.getTailorShopId());
+        Measurement measurement = measurementRepository.getMeasurementById(clothingOrder.getMeasurementId());
 
         if (customer == null) {
             throw new ApiException("Customer not found");
@@ -72,11 +78,14 @@ public class ClothingOrderService {
         if (tailorShop == null) {
             throw new ApiException("Tailor shop not found");
         }
+        if (measurement == null) {
+            throw new ApiException("Measurement not found");
+        }
+        if (!measurement.getCustomerId().equals(clothingOrder.getCustomerId())) {
+            throw new ApiException("Measurement does not belong to this customer");
+        }
         if (!tailorShop.getSpecialty().equals("ALL") && !tailorShop.getSpecialty().equals(clothingOrder.getCategory())) {
             throw new ApiException("Tailor shop does not support this order category");
-        }
-        if (clothingOrder.getDeliveryDate().isBefore(clothingOrder.getOrderDate())) {
-            throw new ApiException("Delivery date must be after order date");
         }
         if (!clothingOrder.getStatus().equals("PENDING")) {
             throw new ApiException("New order status must be PENDING");
@@ -99,30 +108,36 @@ public class ClothingOrderService {
             throw new ApiException("Customer not found");
         }
 
+        Measurement measurement = measurementRepository.getMeasurementById(clothingOrder.getMeasurementId());
+
         TailorShop tailorShop = tailorShopRepository.getTailorShopById(clothingOrder.getTailorShopId());
 
+        if (measurement == null) {
+            throw new ApiException("Measurement not found");
+        }
+        if (!measurement.getCustomerId().equals(clothingOrder.getCustomerId())) {
+            throw new ApiException("Measurement does not belong to this customer");
+        }
         if (tailorShop == null) {
             throw new ApiException("Tailor shop not found");
         }
         if (!tailorShop.getSpecialty().equals("ALL") && !tailorShop.getSpecialty().equals(clothingOrder.getCategory())) {
             throw new ApiException("Tailor shop does not support this order category");
         }
-        if (clothingOrder.getDeliveryDate().isBefore(clothingOrder.getOrderDate())) {
-            throw new ApiException("Delivery date must be after order date");
+        if (clothingOrder.getPrice() != null && !clothingOrder.getPrice().equals(oldClothingOrder.getPrice())) {
+            throw new ApiException("Use the quote endpoint to update order price");
         }
-        if (clothingOrder.getPrice() != null && clothingOrder.getPrice() <= 0) {
-            throw new ApiException("Price must be positive");
+        if (!clothingOrder.getStatus().equals(oldClothingOrder.getStatus())) {
+            throw new ApiException("Use the status or quote endpoints to update order status");
         }
 
         oldClothingOrder.setCustomerId(clothingOrder.getCustomerId());
         oldClothingOrder.setTailorShopId(clothingOrder.getTailorShopId());
+        oldClothingOrder.setMeasurementId(clothingOrder.getMeasurementId());
         oldClothingOrder.setCategory(clothingOrder.getCategory());
         oldClothingOrder.setFabricType(clothingOrder.getFabricType());
         oldClothingOrder.setColor(clothingOrder.getColor());
-        oldClothingOrder.setPrice(clothingOrder.getPrice());
-        oldClothingOrder.setStatus(clothingOrder.getStatus());
         oldClothingOrder.setOrderDate(clothingOrder.getOrderDate());
-        oldClothingOrder.setDeliveryDate(clothingOrder.getDeliveryDate());
 
         clothingOrderRepository.save(oldClothingOrder);
     }
@@ -137,12 +152,13 @@ public class ClothingOrderService {
         clothingOrderRepository.delete(selectedClothingOrder);
     }
 
-    public void changeOrderStatus(Integer orderId, String status) {
+    public void changeOrderStatus(Integer ownerId, Integer orderId, String status) {
         ClothingOrder clothingOrder = clothingOrderRepository.getClothingOrderById(orderId);
 
         if (clothingOrder == null) {
             throw new ApiException("Clothing order not found");
         }
+        validateOwnerCanManageOrder(ownerId, clothingOrder);
         if (!status.matches("^(PENDING|QUOTED|ACCEPTED|IN_PROGRESS|READY|DELIVERED|CANCELLED|REJECTED)$")) {
             throw new ApiException("Status must be PENDING, QUOTED, ACCEPTED, IN_PROGRESS, READY, DELIVERED, CANCELLED, or REJECTED");
         }
@@ -167,12 +183,13 @@ public class ClothingOrderService {
         sendOrderStatusChangedNotification(customer, clothingOrder);
     }
 
-    public void setOrderPrice(Integer orderId, Double price) {
+    public void setOrderPrice(Integer ownerId, Integer orderId, Double price) {
         ClothingOrder clothingOrder = clothingOrderRepository.getClothingOrderById(orderId);
 
         if (clothingOrder == null) {
             throw new ApiException("Clothing order not found");
         }
+        validateOwnerCanManageOrder(ownerId, clothingOrder);
         if (price == null || price <= 0) {
             throw new ApiException("Price must be positive");
         }
@@ -188,12 +205,13 @@ public class ClothingOrderService {
         sendPriceQuoteNotification(customer, clothingOrder);
     }
 
-    public void acceptPriceQuote(Integer orderId) {
+    public void acceptPriceQuote(Integer customerId, Integer orderId) {
         ClothingOrder clothingOrder = clothingOrderRepository.getClothingOrderById(orderId);
 
         if (clothingOrder == null) {
             throw new ApiException("Clothing order not found");
         }
+        validateCustomerOwnsOrder(customerId, clothingOrder);
         if (!clothingOrder.getStatus().equals("QUOTED")) {
             throw new ApiException("Only quoted orders can be accepted");
         }
@@ -205,12 +223,13 @@ public class ClothingOrderService {
         sendOrderStatusChangedNotification(customer, clothingOrder);
     }
 
-    public void rejectPriceQuote(Integer orderId) {
+    public void rejectPriceQuote(Integer customerId, Integer orderId) {
         ClothingOrder clothingOrder = clothingOrderRepository.getClothingOrderById(orderId);
 
         if (clothingOrder == null) {
             throw new ApiException("Clothing order not found");
         }
+        validateCustomerOwnsOrder(customerId, clothingOrder);
         if (!clothingOrder.getStatus().equals("QUOTED")) {
             throw new ApiException("Only quoted orders can be rejected");
         }
@@ -220,6 +239,36 @@ public class ClothingOrderService {
 
         Customer customer = customerRepository.getCustomerById(clothingOrder.getCustomerId());
         sendOrderStatusChangedNotification(customer, clothingOrder);
+    }
+
+    private void validateOwnerCanManageOrder(Integer ownerId, ClothingOrder clothingOrder) {
+        if (ownerId == null) {
+            throw new ApiException("Owner id must not be null");
+        }
+        if (shopOwnerRepository.getShopOwnerById(ownerId) == null) {
+            throw new ApiException("Shop owner not found");
+        }
+
+        TailorShop tailorShop = tailorShopRepository.getTailorShopById(clothingOrder.getTailorShopId());
+
+        if (tailorShop == null) {
+            throw new ApiException("Tailor shop not found");
+        }
+        if (!tailorShop.getOwnerId().equals(ownerId)) {
+            throw new ApiException("Only the owner of this tailor shop can manage this order");
+        }
+    }
+
+    private void validateCustomerOwnsOrder(Integer customerId, ClothingOrder clothingOrder) {
+        if (customerId == null) {
+            throw new ApiException("Customer id must not be null");
+        }
+        if (customerRepository.getCustomerById(customerId) == null) {
+            throw new ApiException("Customer not found");
+        }
+        if (!clothingOrder.getCustomerId().equals(customerId)) {
+            throw new ApiException("Only the customer who created the order can respond to the quote");
+        }
     }
 
     public List<ClothingOrder> getOrdersByCustomerId(Integer customerId) {
@@ -351,14 +400,20 @@ public class ClothingOrderService {
 
     private String buildChatGptPrompt(String category, List<ClothingOrder> orders, Boolean currentMonthData) {
         StringBuilder prompt = new StringBuilder();
-        prompt.append("A customer is unsure what options to select for a custom ")
+        prompt.append("Generate concise clothing option suggestions for a customer choosing ")
                 .append(category)
-                .append(" order in Maqas. ");
-        prompt.append("Use these ")
+                .append(". ");
+        prompt.append("Use only the provided ")
                 .append(currentMonthData ? "current month" : "previous")
-                .append(" orders to suggest trending colors, fabric types, and popular combinations. ");
-        prompt.append("Do not talk like an admin report. Talk directly to the customer. ");
-        prompt.append("Keep it friendly, practical, and under 5 sentences. Orders: ");
+                .append(" order data. Do not invent colors, fabrics, or trends. ");
+        prompt.append("Return exactly 4 bullet points and nothing else. ");
+        prompt.append("Use this exact format: ");
+        prompt.append("- Trending colors: ... ");
+        prompt.append("- Trending fabrics: ... ");
+        prompt.append("- Popular combinations: ... ");
+        prompt.append("- Recommended choice: ... ");
+        prompt.append("Do not include greetings, introductions, explanations, full paragraphs, marketing language, or closing sentences. ");
+        prompt.append("Use short phrases only. Orders: ");
 
         for (ClothingOrder order : orders) {
             prompt.append("Order ")
