@@ -31,42 +31,20 @@ public class TailorShopController {
 
     @PostMapping("/add")
     public ResponseEntity<?> addTailorShop(@RequestBody @Valid TailorShop tailorShop, Errors errors) {
-        if (errors.hasErrors()) {
-            String message = errors.getFieldError().getDefaultMessage();
-            return ResponseEntity.status(400).body(message);
-        }
-
-        try {
             tailorShopService.addTailorShop(tailorShop);
             return ResponseEntity.status(200).body(new ApiResponse("Tailor shop added successfully"));
-        } catch (ApiException e) {
-            return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
-        }
     }
 
     @PutMapping("/update/{id}")
     public ResponseEntity<?> updateTailorShop(@PathVariable Integer id, @RequestBody @Valid TailorShop tailorShop, Errors errors) {
-        if (errors.hasErrors()) {
-            String message = errors.getFieldError().getDefaultMessage();
-            return ResponseEntity.status(400).body(message);
-        }
-
-        try {
             tailorShopService.updateTailorShop(id, tailorShop);
             return ResponseEntity.status(200).body(new ApiResponse("Tailor shop updated successfully"));
-        } catch (ApiException e) {
-            return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
-        }
     }
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteTailorShop(@PathVariable Integer id) {
-        try {
             tailorShopService.deleteTailorShop(id);
             return ResponseEntity.status(200).body(new ApiResponse("Tailor shop deleted successfully"));
-        } catch (ApiException e) {
-            return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
-        }
     }
 
     @GetMapping("/city/{city}")

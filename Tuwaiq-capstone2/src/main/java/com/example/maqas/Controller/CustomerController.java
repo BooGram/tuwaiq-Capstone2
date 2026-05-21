@@ -7,7 +7,6 @@ import com.example.maqas.Service.CustomerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,43 +29,21 @@ public class CustomerController {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<?> addCustomer(@RequestBody @Valid Customer customer, Errors errors) {
-        if (errors.hasErrors()) {
-            String message = errors.getFieldError().getDefaultMessage();
-            return ResponseEntity.status(400).body(message);
-        }
-
-        try {
+    public ResponseEntity<?> addCustomer(@RequestBody @Valid Customer customer) {
             customerService.addCustomer(customer);
             return ResponseEntity.status(200).body(new ApiResponse("Customer added successfully"));
-        } catch (ApiException e) {
-            return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
-        }
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<?> updateCustomer(@PathVariable Integer id, @RequestBody @Valid Customer customer, Errors errors) {
-        if (errors.hasErrors()) {
-            String message = errors.getFieldError().getDefaultMessage();
-            return ResponseEntity.status(400).body(message);
-        }
-
-        try {
+    public ResponseEntity<?> updateCustomer(@PathVariable Integer id, @RequestBody @Valid Customer customer) {
             customerService.updateCustomer(id, customer);
             return ResponseEntity.status(200).body(new ApiResponse("Customer updated successfully"));
-        } catch (ApiException e) {
-            return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
-        }
     }
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteCustomer(@PathVariable Integer id) {
-        try {
             customerService.deleteCustomer(id);
             return ResponseEntity.status(200).body(new ApiResponse("Customer deleted successfully"));
-        } catch (ApiException e) {
-            return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
-        }
     }
 
     @GetMapping("/city/{city}")

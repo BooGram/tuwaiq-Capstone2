@@ -30,79 +30,41 @@ public class MeasurementRequestController {
     }
 
     @PostMapping("/add/{customerId}")
-    public ResponseEntity<?> addMeasurementRequest(@PathVariable Integer customerId, @RequestBody @Valid MeasurementRequest measurementRequest, Errors errors) {
-        if (errors.hasErrors()) {
-            String message = errors.getFieldError().getDefaultMessage();
-            return ResponseEntity.status(400).body(message);
-        }
-
-        try {
+    public ResponseEntity<?> addMeasurementRequest(@PathVariable Integer customerId, @RequestBody @Valid MeasurementRequest measurementRequest) {
             measurementRequestService.addMeasurementRequest(customerId, measurementRequest);
             return ResponseEntity.status(200).body(new ApiResponse("Measurement request added successfully"));
-        } catch (ApiException e) {
-            return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
-        }
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<?> updateMeasurementRequest(@PathVariable Integer id, @RequestBody @Valid MeasurementRequest measurementRequest, Errors errors) {
-        if (errors.hasErrors()) {
-            String message = errors.getFieldError().getDefaultMessage();
-            return ResponseEntity.status(400).body(message);
-        }
-
-        try {
+    public ResponseEntity<?> updateMeasurementRequest(@PathVariable Integer id, @RequestBody @Valid MeasurementRequest measurementRequest) {
             measurementRequestService.updateMeasurementRequest(id, measurementRequest);
             return ResponseEntity.status(200).body(new ApiResponse("Measurement request updated successfully"));
-        } catch (ApiException e) {
-            return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
-        }
     }
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteMeasurementRequest(@PathVariable Integer id) {
-        try {
             measurementRequestService.deleteMeasurementRequest(id);
             return ResponseEntity.status(200).body(new ApiResponse("Measurement request deleted successfully"));
-        } catch (ApiException e) {
-            return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
-        }
     }
 
     @PutMapping("/change-status/{id}/{status}")
     public ResponseEntity<?> changeMeasurementRequestStatus(@PathVariable Integer id, @PathVariable String status) {
-        try {
             measurementRequestService.changeMeasurementRequestStatus(id, status);
             return ResponseEntity.status(200).body(new ApiResponse("Measurement request status changed successfully"));
-        } catch (ApiException e) {
-            return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
-        }
     }
 
     @GetMapping("/customer/{customerId}")
     public ResponseEntity<?> getRequestsByCustomerId(@PathVariable Integer customerId) {
-        try {
             return ResponseEntity.status(200).body(measurementRequestService.getRequestsByCustomerId(customerId));
-        } catch (ApiException e) {
-            return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
-        }
     }
 
     @GetMapping("/shop/{tailorShopId}")
     public ResponseEntity<?> getRequestsByTailorShopId(@PathVariable Integer tailorShopId) {
-        try {
             return ResponseEntity.status(200).body(measurementRequestService.getRequestsByTailorShopId(tailorShopId));
-        } catch (ApiException e) {
-            return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
-        }
     }
 
     @GetMapping("/status/{status}")
     public ResponseEntity<?> getRequestsByStatus(@PathVariable String status) {
-        try {
             return ResponseEntity.status(200).body(measurementRequestService.getRequestsByStatus(status));
-        } catch (ApiException e) {
-            return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
-        }
     }
 }

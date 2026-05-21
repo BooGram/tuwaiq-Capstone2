@@ -30,51 +30,27 @@ public class MeasurementController {
     }
 
     @PostMapping("/add")
-    public ResponseEntity<?> addMeasurement(@RequestBody @Valid Measurement measurement, Errors errors) {
-        if (errors.hasErrors()) {
-            String message = errors.getFieldError().getDefaultMessage();
-            return ResponseEntity.status(400).body(message);
-        }
+    public ResponseEntity<?> addMeasurement(@RequestBody @Valid Measurement measurement) {
+        measurementService.addMeasurement(measurement);
+        return ResponseEntity.status(200).body(new ApiResponse("Measurement added successfully"));
 
-        try {
-            measurementService.addMeasurement(measurement);
-            return ResponseEntity.status(200).body(new ApiResponse("Measurement added successfully"));
-        } catch (ApiException e) {
-            return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
-        }
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<?> updateMeasurement(@PathVariable Integer id, @RequestBody @Valid Measurement measurement, Errors errors) {
-        if (errors.hasErrors()) {
-            String message = errors.getFieldError().getDefaultMessage();
-            return ResponseEntity.status(400).body(message);
-        }
-
-        try {
-            measurementService.updateMeasurement(id, measurement);
-            return ResponseEntity.status(200).body(new ApiResponse("Measurement updated successfully"));
-        } catch (ApiException e) {
-            return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
-        }
+    public ResponseEntity<?> updateMeasurement(@PathVariable Integer id, @RequestBody @Valid Measurement measurement) {
+        measurementService.updateMeasurement(id, measurement);
+        return ResponseEntity.status(200).body(new ApiResponse("Measurement updated successfully"));
     }
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteMeasurement(@PathVariable Integer id) {
-        try {
-            measurementService.deleteMeasurement(id);
-            return ResponseEntity.status(200).body(new ApiResponse("Measurement deleted successfully"));
-        } catch (ApiException e) {
-            return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
-        }
+        measurementService.deleteMeasurement(id);
+        return ResponseEntity.status(200).body(new ApiResponse("Measurement deleted successfully"));
     }
 
     @GetMapping("/customer/{customerId}")
     public ResponseEntity<?> getMeasurementsByCustomerId(@PathVariable Integer customerId) {
-        try {
-            return ResponseEntity.status(200).body(measurementService.getMeasurementsByCustomerId(customerId));
-        } catch (ApiException e) {
-            return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
-        }
+        return ResponseEntity.status(200).body(measurementService.getMeasurementsByCustomerId(customerId));
+
     }
 }

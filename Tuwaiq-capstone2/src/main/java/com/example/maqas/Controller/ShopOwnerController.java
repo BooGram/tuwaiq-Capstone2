@@ -31,41 +31,19 @@ public class ShopOwnerController {
 
     @PostMapping("/add")
     public ResponseEntity<?> addShopOwner(@RequestBody @Valid ShopOwner shopOwner, Errors errors) {
-        if (errors.hasErrors()) {
-            String message = errors.getFieldError().getDefaultMessage();
-            return ResponseEntity.status(400).body(message);
-        }
-
-        try {
             shopOwnerService.addShopOwner(shopOwner);
             return ResponseEntity.status(200).body(new ApiResponse("Shop owner added successfully"));
-        } catch (ApiException e) {
-            return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
-        }
     }
 
     @PutMapping("/update/{id}")
     public ResponseEntity<?> updateShopOwner(@PathVariable Integer id, @RequestBody @Valid ShopOwner shopOwner, Errors errors) {
-        if (errors.hasErrors()) {
-            String message = errors.getFieldError().getDefaultMessage();
-            return ResponseEntity.status(400).body(message);
-        }
-
-        try {
             shopOwnerService.updateShopOwner(id, shopOwner);
             return ResponseEntity.status(200).body(new ApiResponse("Shop owner updated successfully"));
-        } catch (ApiException e) {
-            return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
-        }
     }
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> deleteShopOwner(@PathVariable Integer id) {
-        try {
             shopOwnerService.deleteShopOwner(id);
             return ResponseEntity.status(200).body(new ApiResponse("Shop owner deleted successfully"));
-        } catch (ApiException e) {
-            return ResponseEntity.status(400).body(new ApiResponse(e.getMessage()));
-        }
     }
 }
