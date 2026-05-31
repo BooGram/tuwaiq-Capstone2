@@ -19,7 +19,7 @@ public class ReviewService {
 
     public ApiResponse addReview(Integer shopId, Review review) {
         boolean hasDeliveredOrder = clothingOrderRepository
-                .existsByCustomerIdAndShopIdAndStatus(review.getCustomerId(), shopId, "DELIVERED");
+                .existsByCustomerIdAndTailorShopIdAndStatus(review.getCustomerId(), shopId, "DELIVERED");
 
         if (!hasDeliveredOrder) {
             throw new ApiException("You can only review a shop after receiving your order");

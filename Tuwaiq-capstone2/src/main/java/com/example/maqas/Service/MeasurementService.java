@@ -20,25 +20,24 @@ public class MeasurementService {
         return measurementRepository.findAll();
     }
 
-    public void addMeasurement(Measurement measurement) {
-        if (customerRepository.getCustomerById(measurement.getCustomerId()) == null) {
+    public void addMeasurement(Integer customerId, Measurement measurement) {
+        if (customerRepository.getCustomerById(customerId) == null) {
             throw new ApiException("Customer not found");
         }
-
+        measurement.setCustomerId(customerId);
         measurementRepository.save(measurement);
     }
 
-    public void updateMeasurement(Integer id, Measurement measurement) {
+    public void updateMeasurement(Integer customerId, Integer id, Measurement measurement) {
         Measurement oldMeasurement = measurementRepository.getMeasurementById(id);
-
         if (oldMeasurement == null) {
             throw new ApiException("Measurement not found");
         }
-        if (customerRepository.getCustomerById(measurement.getCustomerId()) == null) {
+        if (customerRepository.getCustomerById(customerId) == null) {
             throw new ApiException("Customer not found");
         }
 
-        oldMeasurement.setCustomerId(measurement.getCustomerId());
+        oldMeasurement.setCustomerId(customerId);
         oldMeasurement.setShoulder(measurement.getShoulder());
         oldMeasurement.setChest(measurement.getChest());
         oldMeasurement.setWaist(measurement.getWaist());
@@ -51,11 +50,9 @@ public class MeasurementService {
 
     public void deleteMeasurement(Integer id) {
         Measurement selectedMeasurement = measurementRepository.getMeasurementById(id);
-
         if (selectedMeasurement == null) {
             throw new ApiException("Measurement not found");
         }
-
         measurementRepository.delete(selectedMeasurement);
     }
 
@@ -63,7 +60,6 @@ public class MeasurementService {
         if (customerRepository.getCustomerById(customerId) == null) {
             throw new ApiException("Customer not found");
         }
-
         return measurementRepository.findMeasurementsByCustomerId(customerId);
     }
 }

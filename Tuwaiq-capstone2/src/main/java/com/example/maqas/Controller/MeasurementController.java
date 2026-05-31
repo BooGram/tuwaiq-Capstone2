@@ -1,13 +1,11 @@
 package com.example.maqas.Controller;
 
-import com.example.maqas.Api.ApiException;
 import com.example.maqas.Api.ApiResponse;
 import com.example.maqas.Model.Measurement;
 import com.example.maqas.Service.MeasurementService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,16 +27,15 @@ public class MeasurementController {
         return ResponseEntity.status(200).body(measurementService.getMeasurements());
     }
 
-    @PostMapping("/add")
-    public ResponseEntity<?> addMeasurement(@RequestBody @Valid Measurement measurement) {
-        measurementService.addMeasurement(measurement);
+    @PostMapping("/add/{customerId}")
+    public ResponseEntity<?> addMeasurement(@PathVariable Integer customerId, @RequestBody @Valid Measurement measurement) {
+        measurementService.addMeasurement(customerId, measurement);
         return ResponseEntity.status(200).body(new ApiResponse("Measurement added successfully"));
-
     }
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity<?> updateMeasurement(@PathVariable Integer id, @RequestBody @Valid Measurement measurement) {
-        measurementService.updateMeasurement(id, measurement);
+    @PutMapping("/update/{customerId}/{id}")
+    public ResponseEntity<?> updateMeasurement(@PathVariable Integer customerId, @PathVariable Integer id, @RequestBody @Valid Measurement measurement) {
+        measurementService.updateMeasurement(customerId, id, measurement);
         return ResponseEntity.status(200).body(new ApiResponse("Measurement updated successfully"));
     }
 
@@ -51,6 +48,5 @@ public class MeasurementController {
     @GetMapping("/customer/{customerId}")
     public ResponseEntity<?> getMeasurementsByCustomerId(@PathVariable Integer customerId) {
         return ResponseEntity.status(200).body(measurementService.getMeasurementsByCustomerId(customerId));
-
     }
 }

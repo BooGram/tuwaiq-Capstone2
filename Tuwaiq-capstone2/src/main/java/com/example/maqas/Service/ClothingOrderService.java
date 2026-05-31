@@ -67,57 +67,55 @@ public class ClothingOrderService {
         return clothingOrderRepository.findAll();
     }
 
-    public void createClothingOrder(ClothingOrder clothingOrder) {
-        Customer customer = customerRepository.getCustomerById(clothingOrder.getCustomerId());
-        TailorShop tailorShop = tailorShopRepository.getTailorShopById(clothingOrder.getTailorShopId());
-        Measurement measurement = measurementRepository.getMeasurementById(clothingOrder.getMeasurementId());
-
+    public void createClothingOrder(Integer customerId, ClothingOrder clothingOrder) {
+        Customer customer = customerRepository.getCustomerById(customerId);
         if (customer == null) {
             throw new ApiException("Customer not found");
         }
+
+        TailorShop tailorShop = tailorShopRepository.getTailorShopById(clothingOrder.getTailorShopId());
         if (tailorShop == null) {
             throw new ApiException("Tailor shop not found");
         }
+
+        Measurement measurement = measurementRepository.getMeasurementById(clothingOrder.getMeasurementId());
         if (measurement == null) {
             throw new ApiException("Measurement not found");
         }
-        if (!measurement.getCustomerId().equals(clothingOrder.getCustomerId())) {
+        if (!measurement.getCustomerId().equals(customerId)) {
             throw new ApiException("Measurement does not belong to this customer");
         }
         if (!tailorShop.getSpecialty().equals("ALL") && !tailorShop.getSpecialty().equals(clothingOrder.getCategory())) {
             throw new ApiException("Tailor shop does not support this order category");
         }
-        if (!clothingOrder.getStatus().equals("PENDING")) {
-            throw new ApiException("New order status must be PENDING");
-        }
         if (clothingOrder.getPrice() != null) {
             throw new ApiException("Customer cannot set the price when creating an order");
         }
 
+        clothingOrder.setCustomerId(customerId);
+        clothingOrder.setStatus("PENDING");
         clothingOrderRepository.save(clothingOrder);
         sendOrderCreatedNotification(customer, clothingOrder);
     }
 
-    public void updateClothingOrder(Integer id, ClothingOrder clothingOrder) {
+    public void updateClothingOrder(Integer customerId, Integer id, ClothingOrder clothingOrder) {
         ClothingOrder oldClothingOrder = clothingOrderRepository.getClothingOrderById(id);
-
         if (oldClothingOrder == null) {
             throw new ApiException("Clothing order not found");
         }
-        if (customerRepository.getCustomerById(clothingOrder.getCustomerId()) == null) {
+        if (customerRepository.getCustomerById(customerId) == null) {
             throw new ApiException("Customer not found");
         }
 
         Measurement measurement = measurementRepository.getMeasurementById(clothingOrder.getMeasurementId());
-
-        TailorShop tailorShop = tailorShopRepository.getTailorShopById(clothingOrder.getTailorShopId());
-
         if (measurement == null) {
             throw new ApiException("Measurement not found");
         }
-        if (!measurement.getCustomerId().equals(clothingOrder.getCustomerId())) {
+        if (!measurement.getCustomerId().equals(customerId)) {
             throw new ApiException("Measurement does not belong to this customer");
         }
+
+        TailorShop tailorShop = tailorShopRepository.getTailorShopById(clothingOrder.getTailorShopId());
         if (tailorShop == null) {
             throw new ApiException("Tailor shop not found");
         }
@@ -127,11 +125,8 @@ public class ClothingOrderService {
         if (clothingOrder.getPrice() != null && !clothingOrder.getPrice().equals(oldClothingOrder.getPrice())) {
             throw new ApiException("Use the quote endpoint to update order price");
         }
-        if (!clothingOrder.getStatus().equals(oldClothingOrder.getStatus())) {
-            throw new ApiException("Use the status or quote endpoints to update order status");
-        }
 
-        oldClothingOrder.setCustomerId(clothingOrder.getCustomerId());
+        oldClothingOrder.setCustomerId(customerId);
         oldClothingOrder.setTailorShopId(clothingOrder.getTailorShopId());
         oldClothingOrder.setMeasurementId(clothingOrder.getMeasurementId());
         oldClothingOrder.setCategory(clothingOrder.getCategory());
@@ -144,17 +139,14 @@ public class ClothingOrderService {
 
     public void deleteClothingOrder(Integer id) {
         ClothingOrder selectedClothingOrder = clothingOrderRepository.getClothingOrderById(id);
-
         if (selectedClothingOrder == null) {
             throw new ApiException("Clothing order not found");
         }
-
         clothingOrderRepository.delete(selectedClothingOrder);
     }
 
     public void changeOrderStatus(Integer ownerId, Integer orderId, String status) {
         ClothingOrder clothingOrder = clothingOrderRepository.getClothingOrderById(orderId);
-
         if (clothingOrder == null) {
             throw new ApiException("Clothing order not found");
         }
@@ -185,7 +177,6 @@ public class ClothingOrderService {
 
     public void setOrderPrice(Integer ownerId, Integer orderId, Double price) {
         ClothingOrder clothingOrder = clothingOrderRepository.getClothingOrderById(orderId);
-
         if (clothingOrder == null) {
             throw new ApiException("Clothing order not found");
         }
@@ -207,7 +198,6 @@ public class ClothingOrderService {
 
     public void acceptPriceQuote(Integer customerId, Integer orderId) {
         ClothingOrder clothingOrder = clothingOrderRepository.getClothingOrderById(orderId);
-
         if (clothingOrder == null) {
             throw new ApiException("Clothing order not found");
         }
@@ -220,12 +210,11 @@ public class ClothingOrderService {
         clothingOrderRepository.save(clothingOrder);
 
         Customer customer = customerRepository.getCustomerById(clothingOrder.getCustomerId());
-        sendOrderStatusChangedNotification(customer, clothingOrder);
+        sendQuoteResponseNotificationToOwner(customer, clothingOrder);
     }
 
     public void rejectPriceQuote(Integer customerId, Integer orderId) {
         ClothingOrder clothingOrder = clothingOrderRepository.getClothingOrderById(orderId);
-
         if (clothingOrder == null) {
             throw new ApiException("Clothing order not found");
         }
@@ -238,7 +227,7 @@ public class ClothingOrderService {
         clothingOrderRepository.save(clothingOrder);
 
         Customer customer = customerRepository.getCustomerById(clothingOrder.getCustomerId());
-        sendOrderStatusChangedNotification(customer, clothingOrder);
+        sendQuoteResponseNotificationToOwner(customer, clothingOrder);
     }
 
     private void validateOwnerCanManageOrder(Integer ownerId, ClothingOrder clothingOrder) {
@@ -248,9 +237,7 @@ public class ClothingOrderService {
         if (shopOwnerRepository.getShopOwnerById(ownerId) == null) {
             throw new ApiException("Shop owner not found");
         }
-
         TailorShop tailorShop = tailorShopRepository.getTailorShopById(clothingOrder.getTailorShopId());
-
         if (tailorShop == null) {
             throw new ApiException("Tailor shop not found");
         }
@@ -275,7 +262,6 @@ public class ClothingOrderService {
         if (customerRepository.getCustomerById(customerId) == null) {
             throw new ApiException("Customer not found");
         }
-
         return clothingOrderRepository.findClothingOrdersByCustomerId(customerId);
     }
 
@@ -283,7 +269,6 @@ public class ClothingOrderService {
         if (tailorShopRepository.getTailorShopById(tailorShopId) == null) {
             throw new ApiException("Tailor shop not found");
         }
-
         return clothingOrderRepository.findClothingOrdersByTailorShopId(tailorShopId);
     }
 
@@ -291,7 +276,6 @@ public class ClothingOrderService {
         if (!category.matches("^(THOBE|ABAYA|DRESS|UNIFORM)$")) {
             throw new ApiException("Category must be THOBE, ABAYA, DRESS, or UNIFORM");
         }
-
         return clothingOrderRepository.findClothingOrdersByCategory(category);
     }
 
@@ -299,7 +283,6 @@ public class ClothingOrderService {
         if (!status.matches("^(PENDING|QUOTED|ACCEPTED|IN_PROGRESS|READY|DELIVERED|CANCELLED|REJECTED)$")) {
             throw new ApiException("Status must be PENDING, QUOTED, ACCEPTED, IN_PROGRESS, READY, DELIVERED, CANCELLED, or REJECTED");
         }
-
         return clothingOrderRepository.findClothingOrdersByStatus(status);
     }
 
@@ -307,7 +290,6 @@ public class ClothingOrderService {
         validateCategory(category);
 
         List<ClothingOrder> orders = clothingOrderRepository.findAll();
-
         if (orders.isEmpty()) {
             throw new ApiException("No orders available for suggestions");
         }
@@ -335,7 +317,6 @@ public class ClothingOrderService {
         if (!openAiChatGptEnabled) {
             return localAnalysis;
         }
-
         if (openAiApiKey == null || openAiApiKey.isEmpty()) {
             return localAnalysis + " ChatGPT integration is not configured.";
         }
@@ -356,15 +337,12 @@ public class ClothingOrderService {
     private String getLocalClothingSuggestions(String category, List<ClothingOrder> orders, Boolean currentMonthData) {
         String colors = getTopValues(orders.stream()
                 .collect(Collectors.groupingBy(ClothingOrder::getColor, Collectors.counting())));
-
         String fabrics = getTopValues(orders.stream()
                 .collect(Collectors.groupingBy(ClothingOrder::getFabricType, Collectors.counting())));
-
         String combinations = getTopValues(orders.stream()
                 .collect(Collectors.groupingBy(order -> order.getColor() + " with " + order.getFabricType(), Collectors.counting())));
 
         String source = currentMonthData ? "current month orders" : "previous orders";
-
         return "Based on " + source + ", customers choosing " + category +
                 " are trending toward these colors: " + colors +
                 ". Popular fabric types are: " + fabrics +
@@ -401,8 +379,7 @@ public class ClothingOrderService {
     private String buildChatGptPrompt(String category, List<ClothingOrder> orders, Boolean currentMonthData) {
         StringBuilder prompt = new StringBuilder();
         prompt.append("Generate concise clothing option suggestions for a customer choosing ")
-                .append(category)
-                .append(". ");
+                .append(category).append(". ");
         prompt.append("Use only the provided ")
                 .append(currentMonthData ? "current month" : "previous")
                 .append(" order data. Do not invent colors, fabrics, or trends. ");
@@ -416,16 +393,11 @@ public class ClothingOrderService {
         prompt.append("Use short phrases only. Orders: ");
 
         for (ClothingOrder order : orders) {
-            prompt.append("Order ")
-                    .append(order.getId())
-                    .append(": category=")
-                    .append(order.getCategory())
-                    .append(", color=")
-                    .append(order.getColor())
-                    .append(", fabric=")
-                    .append(order.getFabricType())
-                    .append(", date=")
-                    .append(order.getOrderDate())
+            prompt.append("Order ").append(order.getId())
+                    .append(": category=").append(order.getCategory())
+                    .append(", color=").append(order.getColor())
+                    .append(", fabric=").append(order.getFabricType())
+                    .append(", date=").append(order.getOrderDate())
                     .append("; ");
         }
 
@@ -435,38 +407,22 @@ public class ClothingOrderService {
     private String extractChatGptText(String responseBody) {
         String marker = "\"content\"";
         int start = responseBody.indexOf(marker);
-
-        if (start == -1) {
-            return responseBody;
-        }
-
+        if (start == -1) return responseBody;
         start = responseBody.indexOf(":", start);
-
-        if (start == -1) {
-            return responseBody;
-        }
-
+        if (start == -1) return responseBody;
         start = responseBody.indexOf("\"", start);
-
-        if (start == -1) {
-            return responseBody;
-        }
-
+        if (start == -1) return responseBody;
         start++;
+
         StringBuilder text = new StringBuilder();
         boolean escaping = false;
 
         for (int i = start; i < responseBody.length(); i++) {
             char current = responseBody.charAt(i);
-
             if (escaping) {
-                if (current == 'n') {
-                    text.append('\n');
-                } else if (current == 't') {
-                    text.append('\t');
-                } else {
-                    text.append(current);
-                }
+                if (current == 'n') text.append('\n');
+                else if (current == 't') text.append('\t');
+                else text.append(current);
                 escaping = false;
             } else if (current == '\\') {
                 escaping = true;
@@ -481,17 +437,12 @@ public class ClothingOrderService {
     }
 
     private String escapeJson(String value) {
-        return value
-                .replace("\\", "\\\\")
-                .replace("\"", "\\\"")
-                .replace("\n", "\\n")
-                .replace("\r", "\\r")
-                .replace("\t", "\\t");
+        return value.replace("\\", "\\\\").replace("\"", "\\\"")
+                .replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t");
     }
 
     private String getTopValues(Map<String, Long> values) {
-        return values.entrySet()
-                .stream()
+        return values.entrySet().stream()
                 .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
                 .limit(3)
                 .map(Map.Entry::getKey)
@@ -500,44 +451,32 @@ public class ClothingOrderService {
 
     private void sendOrderCreatedNotification(Customer customer, ClothingOrder clothingOrder) {
         String message = "Hello " + customer.getName() + ", your Maqas order #" + clothingOrder.getId() + " has been created with status " + clothingOrder.getStatus();
-        try {
-            sendEmail(customer.getEmail(), message);
-        } catch (ApiException e) {
-            System.out.println(e.getMessage());
-        }
-        try {
-            sendWhatsApp(customer.getPhoneNumber(), message);
-        } catch (ApiException e) {
-            System.out.println(e.getMessage());
-        }
+        try { sendEmail(customer.getEmail(), message); } catch (ApiException e) { System.out.println(e.getMessage()); }
+        try { sendWhatsApp(customer.getPhoneNumber(), message); } catch (ApiException e) { System.out.println(e.getMessage()); }
     }
 
     private void sendOrderStatusChangedNotification(Customer customer, ClothingOrder clothingOrder) {
         String message = "Hello " + customer.getName() + ", your Maqas order #" + clothingOrder.getId() + " status changed to " + clothingOrder.getStatus();
-        try {
-            sendEmail(customer.getEmail(), message);
-        } catch (ApiException e) {
-            System.out.println(e.getMessage());
-        }
-        try {
-            sendWhatsApp(customer.getPhoneNumber(), message);
-        } catch (ApiException e) {
-            System.out.println(e.getMessage());
-        }
+        try { sendEmail(customer.getEmail(), message); } catch (ApiException e) { System.out.println(e.getMessage()); }
+        try { sendWhatsApp(customer.getPhoneNumber(), message); } catch (ApiException e) { System.out.println(e.getMessage()); }
+    }
+
+    private void sendQuoteResponseNotificationToOwner(Customer customer, ClothingOrder clothingOrder) {
+        TailorShop tailorShop = tailorShopRepository.getTailorShopById(clothingOrder.getTailorShopId());
+        if (tailorShop == null) return;
+        com.example.maqas.Model.ShopOwner shopOwner = shopOwnerRepository.getShopOwnerById(tailorShop.getOwnerId());
+        if (shopOwner == null) return;
+
+        String message = "Customer " + customer.getName() + " has " + clothingOrder.getStatus().toLowerCase() +
+                " the price quote for order #" + clothingOrder.getId() + " (" + clothingOrder.getPrice() + " SAR).";
+        try { sendEmail(shopOwner.getEmail(), message); } catch (ApiException e) { System.out.println(e.getMessage()); }
+        try { sendWhatsApp(shopOwner.getPhoneNumber(), message); } catch (ApiException e) { System.out.println(e.getMessage()); }
     }
 
     private void sendPriceQuoteNotification(Customer customer, ClothingOrder clothingOrder) {
         String message = "Hello " + customer.getName() + ", your Maqas order #" + clothingOrder.getId() + " has a new price quote: " + clothingOrder.getPrice() + " SAR. Please accept or reject the quote.";
-        try {
-            sendEmail(customer.getEmail(), message);
-        } catch (ApiException e) {
-            System.out.println(e.getMessage());
-        }
-        try {
-            sendWhatsApp(customer.getPhoneNumber(), message);
-        } catch (ApiException e) {
-            System.out.println(e.getMessage());
-        }
+        try { sendEmail(customer.getEmail(), message); } catch (ApiException e) { System.out.println(e.getMessage()); }
+        try { sendWhatsApp(customer.getPhoneNumber(), message); } catch (ApiException e) { System.out.println(e.getMessage()); }
     }
 
     private void sendEmail(String email, String message) {
@@ -545,13 +484,10 @@ public class ClothingOrderService {
             System.out.println("Email notification sent to " + email + ": " + message);
             return;
         }
-
         JavaMailSender javaMailSender = javaMailSenderProvider.getIfAvailable();
-
         if (javaMailSender == null || emailFrom == null || emailFrom.isEmpty()) {
             throw new ApiException("Email integration is not configured");
         }
-
         try {
             SimpleMailMessage mailMessage = new SimpleMailMessage();
             mailMessage.setFrom(emailFrom);
@@ -569,25 +505,20 @@ public class ClothingOrderService {
             System.out.println("WhatsApp notification sent to " + phoneNumber + ": " + message);
             return;
         }
-
         if (ultramsgInstanceId == null || ultramsgInstanceId.isEmpty() ||
                 ultramsgToken == null || ultramsgToken.isEmpty()) {
             throw new ApiException("WhatsApp integration is not configured");
         }
-
         try {
             String body = "token=" + encode(ultramsgToken) +
                     "&to=" + encode(convertSaudiPhoneNumber(phoneNumber)) +
                     "&body=" + encode(message);
-
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create("https://api.ultramsg.com/" + ultramsgInstanceId + "/messages/chat"))
                     .header("Content-Type", "application/x-www-form-urlencoded")
                     .POST(HttpRequest.BodyPublishers.ofString(body))
                     .build();
-
             HttpResponse<String> response = HttpClient.newHttpClient().send(request, HttpResponse.BodyHandlers.ofString());
-
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
                 throw new ApiException("WhatsApp notification failed");
             }
@@ -602,7 +533,6 @@ public class ClothingOrderService {
         if (phoneNumber.startsWith("05")) {
             return "+966" + phoneNumber.substring(1);
         }
-
         return phoneNumber;
     }
 

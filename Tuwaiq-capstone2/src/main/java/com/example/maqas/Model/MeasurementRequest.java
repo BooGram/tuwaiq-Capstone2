@@ -8,7 +8,6 @@ import jakarta.persistence.Id;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -48,6 +47,5 @@ public class MeasurementRequest {
 
     @Column(nullable = false, length = 20, columnDefinition = "VARCHAR(20) DEFAULT 'PENDING'")
     @Check(constraints = "status IN ('PENDING','ACCEPTED','COMPLETED','CANCELLED')")
-    @Pattern(regexp = "^(PENDING|ACCEPTED|COMPLETED|CANCELLED)$", message = "Status must be valid")
-    private String status = "PENDING";
+    private String status;
 }

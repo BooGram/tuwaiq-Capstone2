@@ -22,7 +22,6 @@ public class Review {
     @NotNull(message = "Customer ID must not be null")
     private Integer customerId;
 
-    @NotNull(message = "Shop ID must not be null")
     private Integer shopId;
 
     @NotNull(message = "Rating must not be null")

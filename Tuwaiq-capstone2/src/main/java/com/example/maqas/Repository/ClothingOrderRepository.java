@@ -18,5 +18,5 @@ public interface ClothingOrderRepository extends JpaRepository<ClothingOrder, In
 
     List<ClothingOrder> findClothingOrdersByStatus(String status);
 
-    boolean existsByCustomerIdAndShopIdAndStatus(Integer customerId, Integer shopId, String status);
+    boolean existsByCustomerIdAndTailorShopIdAndStatus(Integer customerId, Integer tailorShopId, String status);
 }

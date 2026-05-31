@@ -26,7 +26,6 @@ public class ClothingOrder {
     private Integer id;
 
     @Column(nullable = false)
-    @NotNull(message = "Customer id must not be null")
     private Integer customerId;
 
     @Column(nullable = false)
@@ -56,8 +55,7 @@ public class ClothingOrder {
 
     @Column(nullable = false, length = 20, columnDefinition = "VARCHAR(20) DEFAULT 'PENDING'")
     @Check(constraints = "status IN ('PENDING','QUOTED','ACCEPTED','IN_PROGRESS','READY','DELIVERED','CANCELLED','REJECTED')")
-    @Pattern(regexp = "^(PENDING|QUOTED|ACCEPTED|IN_PROGRESS|READY|DELIVERED|CANCELLED|REJECTED)$", message = "Status must be valid")
-    private String status = "PENDING";
+    private String status;
 
     @Column(nullable = false)
     @NotNull(message = "Order date must not be null")

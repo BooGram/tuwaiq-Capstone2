@@ -22,7 +22,6 @@ public class Measurement {
     private Integer id;
 
     @Column(nullable = false)
-    @NotNull(message = "Customer id must not be null")
     private Integer customerId;
 
     @Column(nullable = false)
